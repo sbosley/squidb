@@ -63,7 +63,11 @@ public class DatabaseDao {
         return database.getName();
     }
 
-    private SqlTable<?> getTableFrom(Class<? extends AbstractModel> modelClass) {
+    private Table getTableFrom(Class<? extends TableModel> modelClass) {
+        return (Table) getSqlTableFrom(modelClass);
+    }
+
+    private SqlTable<?> getSqlTableFrom(Class<? extends AbstractModel> modelClass) {
         return database.getTable(modelClass);
     }
 
@@ -77,7 +81,7 @@ public class DatabaseDao {
      */
     public <TYPE extends AbstractModel> SquidCursor<TYPE> query(Class<TYPE> modelClass, Query query) {
         if (!query.hasTable() && modelClass != null) {
-            SqlTable<?> table = getTableFrom(modelClass);
+            SqlTable<?> table = getSqlTableFrom(modelClass);
             if (table == null) {
                 throw new IllegalArgumentException("Query has no FROM clause and model class "
                         + modelClass.getSimpleName() + " has no associated table");
@@ -164,8 +168,8 @@ public class DatabaseDao {
      * @return true if delete was successful
      */
     public boolean delete(Class<? extends TableModel> modelClass, long id) {
-        Table table = (Table) getTableFrom(modelClass);
-        int rowsUpdated = database.delete(table.getExpression(), table.getIdProperty().eq(id).toRawSql(), null);
+        Table table = getTableFrom(modelClass);
+        int rowsUpdated = database.delete(Delete.from(table).where(table.getIdProperty().eq(id)));
         if (rowsUpdated > 0) {
             notifyForTable(DBOperation.DELETE, null, table, id);
         }
@@ -179,8 +183,12 @@ public class DatabaseDao {
      * @return the number of deleted rows
      */
     public int deleteWhere(Class<? extends TableModel> modelClass, Criterion where) {
-        SqlTable<?> table = getTableFrom(modelClass);
-        int rowsUpdated = database.delete(table.getExpression(), where.toRawSql(), null);
+        Table table = getTableFrom(modelClass);
+        Delete delete = Delete.from(table);
+        if (where != null) {
+            delete.where(where);
+        }
+        int rowsUpdated = database.delete(delete);
         if (rowsUpdated > 0) {
             notifyForTable(DBOperation.DELETE, null, table, TableModel.NO_ID);
         }
@@ -235,15 +243,16 @@ public class DatabaseDao {
      */
     public int updateWithOnConflict(Criterion where, TableModel template, ConflictAlgorithm conflictAlgorithm) {
         Class<? extends TableModel> modelClass = template.getClass();
-        SqlTable<?> table = getTableFrom(modelClass);
-        int rowsUpdated;
-        if (conflictAlgorithm == null) {
-            rowsUpdated = database.update(table.getExpression(), template.getSetValues(),
-                    where.toRawSql(), null);
-        } else {
-            rowsUpdated = database.updateWithOnConflict(table.getExpression(),
-                    template.getSetValues(), where.toRawSql(), null, conflictAlgorithm.getAndroidValue());
+        Table table = getTableFrom(modelClass);
+        Update update = Update.table(table).fromTemplate(template);
+        if (where != null) {
+            update.where(where);
         }
+        if (conflictAlgorithm != null) {
+            update.onConflict(conflictAlgorithm);
+        }
+
+        int rowsUpdated = database.update(update);
         if (rowsUpdated > 0) {
             notifyForTable(DBOperation.UPDATE, template, table, TableModel.NO_ID);
         }
@@ -349,7 +358,7 @@ public class DatabaseDao {
      */
     protected final boolean insertRow(TableModel item, ConflictAlgorithm conflictAlgorithm) {
         Class<? extends TableModel> modelClass = item.getClass();
-        SqlTable<?> table = getTableFrom(modelClass);
+        SqlTable<?> table = getSqlTableFrom(modelClass);
         long newRow;
         ContentValues mergedValues = item.getMergedValues();
         if (mergedValues.size() == 0) {
@@ -398,15 +407,14 @@ public class DatabaseDao {
         }
 
         Class<? extends TableModel> modelClass = item.getClass();
-        Table table = (Table) getTableFrom(modelClass);
+        Table table = getTableFrom(modelClass);
         boolean result;
-        if (conflictAlgorithm == null) {
-            result = database.update(table.getExpression(), item.getSetValues(),
-                    table.getIdProperty().eq(item.getId()).toRawSql(), null) > 0;
-        } else {
-            result = database.updateWithOnConflict(table.getExpression(), item.getSetValues(),
-                    table.getIdProperty().eq(item.getId()).toRawSql(), null, conflictAlgorithm.getAndroidValue()) > 0;
+        Update update = Update.table(table).fromTemplate(item).where(table.getIdProperty().eq(item.getId()));
+        if (conflictAlgorithm != null) {
+            update.onConflict(conflictAlgorithm);
         }
+
+        result = database.update(update) > 0;
         if (result) {
             notifyForTable(DBOperation.UPDATE, item, table, item.getId());
             item.markSaved();

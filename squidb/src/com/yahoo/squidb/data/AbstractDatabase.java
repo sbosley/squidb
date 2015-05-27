@@ -56,11 +56,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * if the operation succeeded and false if it failed for any reason. If it fails, there will also be a call to
  * {@link #onError(String, Throwable) onError}.
  * <p>
- * Methods that use String arrays for where clause arguments ({@link #update(String, ContentValues, String, String[])
- * update}, {@link #updateWithOnConflict(String, ContentValues, String, String[], int) updateWithOnConflict}, and
- * {@link #delete(String, String, String[]) delete}) are wrappers around Android's {@link SQLiteDatabase} methods, and
- * so are left intact. However, Android's default behavior of binding all arguments as strings can have unexpected
- * bugs, particularly when working with SQLite functions. For example:
+ *
+ * AbstractDatabase does not wrap methods that use String arrays for where clause arguments ({@link
+ * SQLiteDatabase#update(String, ContentValues, String, String[]) update},
+ * {@link SQLiteDatabase#updateWithOnConflict(String, ContentValues, String, String[], int) updateWithOnConflict}, and
+ * {@link SQLiteDatabase#delete(String, String, String[]) delete}). Android's default behavior of binding all arguments
+ * as strings can have unexpected bugs, particularly when working with SQLite functions. For example:
  *
  * <pre>
  * select * from t where _id = '1'; // Returns the first row
@@ -68,7 +69,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * </pre>
  *
  * {@link DatabaseDao} contains workarounds for this behavior, so all users are encouraged to use DatabaseDao for these
- * operations. If you choose to call these methods directly on AbstractDatabase instead, you have been warned!
+ * operations. Alternatively, you can construct {@link Update} or {@link Delete} objects for these operations.
  */
 public abstract class AbstractDatabase {
 
@@ -280,7 +281,26 @@ public abstract class AbstractDatabase {
     }
 
     /**
-     * @return the underlying {@link SQLiteDatabase}, which will be opened if it is not yet opened
+     * Gets the underlying SQLiteDatabase instances. Most users should not need to call this. If you call this
+     * from your AbstractDatabase subclass with the intention of executing SQL, you should wrap the calls with a lock,
+     * probably the non-exclusive one:
+     *
+     * <pre>
+     * public void execSql(String sql) {
+     *     aquireNonExclusiveLock();
+     *     try {
+     *         getDatabase().execSQL(sql);
+     *     } finally {
+     *         releaseNonExclusiveLock();
+     *     }
+     * \}
+     * </pre>
+     *
+     * You only need to acquire the exclusive lock if you truly need exclusive access to the database connection.
+     *
+     * @return the underlying {@link SQLiteDatabase}, which will be opened if it is not yet opened.
+     * @see #acquireExclusiveLock()
+     * @see #acquireNonExclusiveLock()
      */
     protected synchronized final SQLiteDatabase getDatabase() {
         if (database == null) {
@@ -550,20 +570,6 @@ public abstract class AbstractDatabase {
     }
 
     /**
-     * See the note at the top of this file about the potential bugs when using String[] whereArgs
-     *
-     * @see SQLiteDatabase#delete(String, String, String[])
-     */
-    public int delete(String table, String whereClause, String[] whereArgs) {
-        acquireNonExclusiveLock();
-        try {
-            return getDatabase().delete(table, whereClause, whereArgs);
-        } finally {
-            releaseNonExclusiveLock();
-        }
-    }
-
-    /**
      * Execute a SQL {@link com.yahoo.squidb.sql.Delete} statement
      *
      * @return the number of rows deleted on success, -1 on failure
@@ -575,36 +581,6 @@ public abstract class AbstractDatabase {
             SQLiteStatement statement = getDatabase().compileStatement(compiled.sql);
             SquidCursorFactory.bindArgumentsToProgram(statement, compiled.sqlArgs);
             return statement.executeUpdateDelete();
-        } finally {
-            releaseNonExclusiveLock();
-        }
-    }
-
-    /**
-     * See the note at the top of this file about the potential bugs when using String[] whereArgs
-     *
-     * @see SQLiteDatabase#update(String table, ContentValues values, String whereClause, String[] whereArgs)
-     */
-    public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
-        acquireNonExclusiveLock();
-        try {
-            return getDatabase().update(table, values, whereClause, whereArgs);
-        } finally {
-            releaseNonExclusiveLock();
-        }
-    }
-
-    /**
-     * See the note at the top of this file about the potential bugs when using String[] whereArgs
-     *
-     * @see SQLiteDatabase#updateWithOnConflict(String table, ContentValues values, String whereClause, String[]
-     * whereArgs, int conflictAlgorithm)
-     */
-    public int updateWithOnConflict(String table, ContentValues values, String whereClause, String[] whereArgs,
-            int conflictAlgorithm) {
-        acquireNonExclusiveLock();
-        try {
-            return getDatabase().updateWithOnConflict(table, values, whereClause, whereArgs, conflictAlgorithm);
         } finally {
             releaseNonExclusiveLock();
         }
