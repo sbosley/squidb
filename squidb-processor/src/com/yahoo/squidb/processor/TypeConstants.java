@@ -83,6 +83,7 @@ public class TypeConstants {
     static {
         BYTE_ARRAY = CoreTypes.PRIMITIVE_BYTE.clone();
         BYTE_ARRAY.setArrayDepth(1);
+        SQL_TABLE.setTypeArgs(Collections.singletonList(GenericName.DEFAULT_WILDCARD));
     }
 
     public static final DeclaredTypeName PROPERTY = new DeclaredTypeName(SQUIDB_SQL_PACKAGE, "Property");

@@ -179,6 +179,14 @@ public class ViewModelFileWriter extends ModelFileWriter<ViewModelSpecWrapper> {
         }
     }
 
+    @Override
+    protected String getSqlTableName() {
+        if (modelSpec.getQueryElement() == null) {
+            return "null";
+        }
+        return modelSpec.getSpecAnnotation().isSubquery() ? SUBQUERY_NAME : VIEW_NAME;
+    }
+
     private void emitTableModelMapper() throws IOException {
         writer.writeComment("--- mappers");
         writer.writeFieldDeclaration(TypeConstants.TABLE_MAPPING_VISITORS, "tableMappingInfo",

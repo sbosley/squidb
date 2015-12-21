@@ -143,6 +143,11 @@ public class TableModelFileWriter extends ModelFileWriter<TableModelSpecWrapper>
     }
 
     @Override
+    protected String getSqlTableName() {
+        return TABLE_NAME;
+    }
+
+    @Override
     protected void emitDefaultValuesInitializationBlock() throws IOException {
         for (PropertyGenerator generator : modelSpec.getPropertyGenerators()) {
             generator.emitPutDefault(writer, DEFAULT_VALUES_NAME);

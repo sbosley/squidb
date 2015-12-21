@@ -81,6 +81,7 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
         emitPropertiesArray();
         emitModelSpecificFields();
         emitPropertyDeclarations();
+        emitTableAndPropertyGetters();
         emitDefaultValues();
         plugins.afterEmitSchema(writer);
 
@@ -103,6 +104,7 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
 
     private void emitImports() throws IOException {
         Set<DeclaredTypeName> imports = new HashSet<>();
+        imports.add(TypeConstants.SQL_TABLE);
         modelSpec.addRequiredImports(imports);
         writer.writeImports(imports);
         writer.registerOtherKnownNames(TypeConstants.CREATOR,
@@ -160,6 +162,30 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
     }
 
     protected abstract void writePropertiesInitializationBlock() throws IOException;
+
+    protected void emitTableAndPropertyGetters() throws IOException {
+        MethodDeclarationParameters getSqlTable = new MethodDeclarationParameters()
+                .setMethodName("getSqlTable")
+                .setReturnType(TypeConstants.SQL_TABLE)
+                .setModifiers(Modifier.PUBLIC);
+
+        writer.writeAnnotation(CoreTypes.OVERRIDE);
+        writer.beginMethodDefinition(getSqlTable);
+        writer.writeStatement(Expressions.returnExpr(Expressions.fromString(getSqlTableName())));
+        writer.finishMethodDefinition();
+
+        MethodDeclarationParameters getProperties = new MethodDeclarationParameters()
+                .setMethodName("getProperties")
+                .setReturnType(TypeConstants.PROPERTY_ARRAY)
+                .setModifiers(Modifier.PUBLIC);
+
+        writer.writeAnnotation(CoreTypes.OVERRIDE);
+        writer.beginMethodDefinition(getProperties);
+        writer.writeStatement(Expressions.returnExpr(Expressions.fromString(PROPERTIES_ARRAY_NAME)));
+        writer.finishMethodDefinition();
+    }
+
+    protected abstract String getSqlTableName();
 
     protected void emitDefaultValues() throws IOException {
         writer.writeComment("--- default values");

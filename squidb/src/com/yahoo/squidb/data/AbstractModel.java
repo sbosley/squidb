@@ -9,6 +9,7 @@ import com.yahoo.squidb.sql.Field;
 import com.yahoo.squidb.sql.Property;
 import com.yahoo.squidb.sql.Property.PropertyVisitor;
 import com.yahoo.squidb.sql.Property.PropertyWritingVisitor;
+import com.yahoo.squidb.sql.SqlTable;
 import com.yahoo.squidb.utility.Logger;
 
 import java.util.HashMap;
@@ -72,6 +73,12 @@ public abstract class AbstractModel implements Cloneable {
     private static final ValueCastingVisitor valueCastingVisitor = new ValueCastingVisitor();
 
     // --- abstract methods
+
+    /** Get the full properties array for this model class */
+    public abstract Property<?>[] getProperties();
+
+    /** Get the table, view, or subquery represented by this model class */
+    public abstract SqlTable<?> getSqlTable();
 
     /** Get the default values for this object */
     public abstract ValuesStorage getDefaultValues();

@@ -56,6 +56,16 @@ public class InheritedModelFileWriter extends ModelFileWriter<InheritedModelSpec
     }
 
     @Override
+    protected void emitTableAndPropertyGetters() throws IOException {
+        // The superclass declares these
+    }
+
+    @Override
+    protected String getSqlTableName() {
+        return null; // The superclass takes care of this
+    }
+
+    @Override
     protected void emitDefaultValues() throws IOException {
         // Override: do nothing, the superclass should take care of default values
     }
