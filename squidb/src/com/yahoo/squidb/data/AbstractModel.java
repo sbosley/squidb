@@ -219,6 +219,9 @@ public abstract class AbstractModel implements Cloneable {
     /**
      * Copies values from the given {@link ValuesStorage} into the model. The values will be added to the model as read
      * values (i.e. will not be considered set values or mark the model as dirty).
+     *
+     * @param values a key-value pairing of values to read from
+     * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void readPropertiesFromValuesStorage(ValuesStorage values, Property<?>... properties) {
         prepareToReadProperties();
@@ -235,23 +238,15 @@ public abstract class AbstractModel implements Cloneable {
     /**
      * Copies values from the given Map. The values will be added to the model as read values (i.e. will not be
      * considered set values or mark the model as dirty).
+     *
+     * @param values a key-value pairing of values to read from
+     * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void readPropertiesFromMap(Map<String, Object> values, Property<?>... properties) {
         if (values == null) {
             return;
         }
         readPropertiesFromValuesStorage(new MapValuesStorage(values), properties);
-    }
-
-    /**
-     * Analogous to {@link #readPropertiesFromMap(Map, Property[])} but adds the values to the model as set values,
-     * i.e. marks the model as dirty with these values.
-     */
-    public void setPropertiesFromMap(Map<String, Object> values, Property<?>... properties) {
-        if (values == null) {
-            return;
-        }
-        setPropertiesFromValuesStorage(new MapValuesStorage(values), properties);
     }
 
     /**
@@ -417,6 +412,9 @@ public abstract class AbstractModel implements Cloneable {
     /**
      * Analogous to {@link #readPropertiesFromValuesStorage(ValuesStorage, Property[])} but adds the values to the
      * model as set values, i.e. marks the model as dirty with these values.
+     *
+     * @param values a {@link ValuesStorage} to read from
+     * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void setPropertiesFromValuesStorage(ValuesStorage values, Property<?>... properties) {
         if (values != null) {
@@ -433,6 +431,20 @@ public abstract class AbstractModel implements Cloneable {
                 }
             }
         }
+    }
+
+    /**
+     * Analogous to {@link #readPropertiesFromMap(Map, Property[])} but adds the values to the model as set values,
+     * i.e. marks the model as dirty with these values.
+     *
+     * @param values a key-value pairing of values to read from
+     * @param properties which properties to read from the values. Only properties specified in this list will be read
+     */
+    public void setPropertiesFromMap(Map<String, Object> values, Property<?>... properties) {
+        if (values == null) {
+            return;
+        }
+        setPropertiesFromValuesStorage(new MapValuesStorage(values), properties);
     }
 
     /**
