@@ -91,6 +91,9 @@ public abstract class AbstractModel implements Cloneable {
     /** Values from database */
     protected ValuesStorage values = null;
 
+    /** Values from other tables (not persisted with model instances) */
+    protected ValuesStorage otherTableValues = null;
+
     /** Transitory Metadata (not saved in database) */
     protected HashMap<String, Object> transitoryData = null;
 
@@ -139,6 +142,8 @@ public abstract class AbstractModel implements Cloneable {
     public void clear() {
         values = null;
         setValues = null;
+        otherTableValues = null;
+        transitoryData = null;
     }
 
     /**
@@ -193,6 +198,11 @@ public abstract class AbstractModel implements Cloneable {
             clone.values = newValuesStorage();
             clone.values.putAll(values);
         }
+
+        if (otherTableValues != null) {
+            clone.otherTableValues = newValuesStorage();
+            clone.otherTableValues.putAll(otherTableValues);
+        }
         return clone;
     }
 
@@ -224,6 +234,7 @@ public abstract class AbstractModel implements Cloneable {
      * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void readPropertiesFromValuesStorage(ValuesStorage values, Property<?>... properties) {
+        // TODO: Handle properties not from this model
         prepareToReadProperties();
 
         if (values != null) {
@@ -255,8 +266,12 @@ public abstract class AbstractModel implements Cloneable {
     public void readPropertiesFromCursor(SquidCursor<?> cursor) {
         prepareToReadProperties();
 
-        for (Field<?> field : cursor.getFields()) {
-            readFieldIntoModel(cursor, field);
+        if (cursor != null) {
+            for (Field<?> field : cursor.getFields()) {
+                if (field instanceof Property<?>) {
+                    readPropertyIntoModel(cursor, (Property<?>) field);
+                }
+            }
         }
     }
 
@@ -266,8 +281,10 @@ public abstract class AbstractModel implements Cloneable {
     public void readPropertiesFromCursor(SquidCursor<?> cursor, Property<?>... properties) {
         prepareToReadProperties();
 
-        for (Property<?> field : properties) {
-            readFieldIntoModel(cursor, field);
+        if (cursor != null) {
+            for (Property<?> field : properties) {
+                readPropertyIntoModel(cursor, field);
+            }
         }
     }
 
@@ -275,18 +292,23 @@ public abstract class AbstractModel implements Cloneable {
         if (values == null) {
             values = newValuesStorage();
         }
-
+        // TODO: Do anything with otherTableValues?
         // clears user-set values
         setValues = null;
         transitoryData = null;
     }
 
-    private void readFieldIntoModel(SquidCursor<?> cursor, com.yahoo.squidb.sql.Field<?> field) {
+    private void readPropertyIntoModel(SquidCursor<?> cursor, Property<?> property) {
         try {
-            if (field instanceof Property<?>) {
-                Property<?> property = (Property<?>) field;
-                saver.save(property, values, cursor.get(property));
+            ValuesStorage valuesStorage = values;
+            if (property.table != getSqlTable()) {
+                if (otherTableValues == null) {
+                    otherTableValues = newValuesStorage();
+                }
+                valuesStorage = otherTableValues;
             }
+            // TODO: Handle autoalias case
+            saver.save(property, valuesStorage, cursor.get(property));
         } catch (IllegalArgumentException e) {
             // underlying cursor may have changed, suppress
         }
@@ -307,6 +329,7 @@ public abstract class AbstractModel implements Cloneable {
      */
     @SuppressWarnings("unchecked")
     public <TYPE> TYPE get(Property<TYPE> property) {
+        // TODO: Handle properties not from this model
         if (setValues != null && setValues.containsKey(property.getName())) {
             return getFromValues(property, setValues);
         } else if (values != null && values.containsKey(property.getName())) {
@@ -318,11 +341,11 @@ public abstract class AbstractModel implements Cloneable {
                     + " not found in model. Make sure the value was set explicitly, read from a cursor,"
                     + " or that the model has a default value for this property.");
         }
-
     }
 
     @SuppressWarnings("unchecked")
     private <TYPE> TYPE getFromValues(Property<TYPE> property, ValuesStorage values) {
+        // TODO: Handle properties not from this model/autoalias case
         Object value = values.get(property.getName());
 
         // Will throw a ClassCastException if the value could not be coerced to the correct type
@@ -334,6 +357,7 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if a value for this property has been read from the database or set by the user
      */
     public boolean containsValue(Property<?> property) {
+        // TODO: Handle properties not from this model
         return valuesContainsKey(setValues, property) || valuesContainsKey(values, property);
     }
 
@@ -343,6 +367,7 @@ public abstract class AbstractModel implements Cloneable {
      * stored is not null
      */
     public boolean containsNonNullValue(Property<?> property) {
+        // TODO: Handle properties not from this model
         return (valuesContainsKey(setValues, property) && setValues.get(property.getName()) != null)
                 || (valuesContainsKey(values, property) && values.get(property.getName()) != null);
     }
@@ -352,10 +377,12 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if this property has a value that was set by the user
      */
     public boolean fieldIsDirty(Property<?> property) {
+        // TODO: Handle properties not from this model
         return valuesContainsKey(setValues, property);
     }
 
     private boolean valuesContainsKey(ValuesStorage values, Property<?> property) {
+        // TODO: Handle properties not from this model/autoalias case
         return values != null && values.containsKey(property.getName());
     }
 
@@ -365,6 +392,7 @@ public abstract class AbstractModel implements Cloneable {
      * Check whether the user has changed this property value and it should be stored for saving in the database
      */
     protected <TYPE> boolean shouldSaveValue(Property<TYPE> property, TYPE newValue) {
+        // TODO: Handle properties not from this model/autoalias case
         return shouldSaveValue(property.getName(), newValue);
     }
 
@@ -398,6 +426,7 @@ public abstract class AbstractModel implements Cloneable {
      * @param value the new value for the property
      */
     public <TYPE> void set(Property<TYPE> property, TYPE value) {
+        // TODO: Handle properties not from this model
         if (setValues == null) {
             setValues = newValuesStorage();
         }
@@ -417,6 +446,7 @@ public abstract class AbstractModel implements Cloneable {
      * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void setPropertiesFromValuesStorage(ValuesStorage values, Property<?>... properties) {
+        // TODO: Handle properties not from this model
         if (values != null) {
             if (setValues == null) {
                 setValues = newValuesStorage();
@@ -441,6 +471,7 @@ public abstract class AbstractModel implements Cloneable {
      * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void setPropertiesFromMap(Map<String, Object> values, Property<?>... properties) {
+        // TODO: Handle properties not from this model
         if (values == null) {
             return;
         }
@@ -460,6 +491,8 @@ public abstract class AbstractModel implements Cloneable {
         if (values != null && values.containsKey(property.getName())) {
             values.remove(property.getName());
         }
+
+        // TODO: Handle properties not from this model
     }
 
     // --- storing and retrieving transitory values
