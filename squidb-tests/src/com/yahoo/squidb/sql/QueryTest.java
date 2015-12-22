@@ -11,6 +11,8 @@ import com.yahoo.squidb.sql.Property.LongProperty;
 import com.yahoo.squidb.sql.Property.StringProperty;
 import com.yahoo.squidb.test.DatabaseTestCase;
 import com.yahoo.squidb.test.Employee;
+import com.yahoo.squidb.test.Tag;
+import com.yahoo.squidb.test.Task;
 import com.yahoo.squidb.test.TestModel;
 import com.yahoo.squidb.test.TestViewModel;
 import com.yahoo.squidb.test.Thing;
@@ -1182,5 +1184,53 @@ public class QueryTest extends DatabaseTestCase {
         TestModel fetched = database.fetch(TestModel.class, model.getId());
         assertEquals(unicode, fetched.getFirstName());
         assertEquals(reversedUnicode, fetched.getLastName());
+    }
+
+    public void testReadAndPersistModelsWithOtherProperties() {
+        Task task1 = new Task().setTitle("Task 1").setDueDate(System.currentTimeMillis()).setPriority(1);
+        Task task2 = new Task().setTitle("Task 2").setDueDate(System.currentTimeMillis()).setPriority(2);
+        database.persist(task1);
+        database.persist(task2);
+
+        Tag tag1 = new Tag().setTag("Tag 1").setTaskId(task2.getId());
+        Tag tag2 = new Tag().setTag("Tag 2").setTaskId(task1.getId());
+        database.persist(tag1);
+        database.persist(tag2);
+
+        Query joinQuery = Query.select(Task.ID, Task.TITLE, Task.PRIORITY, Task.DUE_DATE, Tag.ID, Tag.TAG)
+                .from(Task.TABLE).leftJoin(Tag.TABLE, Task.ID.eq(Tag.TASK_ID))
+                .orderBy(Task.ID.asc());
+
+        SquidCursor<Task> cursor = database.query(Task.class, joinQuery);
+        try {
+            assertEquals(2, cursor.getCount());
+            cursor.moveToFirst();
+            Task t1 = new Task(cursor);
+            compareTaskAndTagValues(task1, tag2, t1);
+            t1.setTitle("New Task 1");
+            database.persist(t1);
+
+            cursor.moveToNext();
+            Task t2 = new Task(cursor);
+            compareTaskAndTagValues(task2, tag1, t2);
+            t2.setTitle("New Task 2");
+            database.persist(t2);
+        } finally {
+            cursor.close();
+        }
+
+        Task persistedT1 = database.fetch(Task.class, task1.getId(), Task.TITLE);
+        Task persistedT2 = database.fetch(Task.class, task2.getId(), Task.TITLE);
+        assertEquals("New Task 1", persistedT1.getTitle());
+        assertEquals("New Task 2", persistedT2.getTitle());
+    }
+
+    private void compareTaskAndTagValues(Task expectedTask, Tag expectedTag, Task actual) {
+        assertEquals(expectedTask.getId(), actual.getId());
+        assertEquals(expectedTask.getTitle(), actual.getTitle());
+        assertEquals(expectedTask.getDueDate(), actual.getDueDate());
+        assertEquals(expectedTask.getPriority(), actual.getPriority());
+        assertEquals(expectedTag.getId(), actual.get(Tag.ID).longValue());
+        assertEquals(expectedTag.getTag(), actual.get(Tag.TAG));
     }
 }
