@@ -513,7 +513,7 @@ public class QueryTest extends DatabaseTestCase {
             assertEquals(1, cursor.getCount());
             cursor.moveToFirst();
             Employee employee = new Employee(cursor);
-            assertEquals("bigBird", employee.getName());
+            assertEquals("bigBird", employee.get(query.getTable().qualifyField(Employee.NAME)));
         } finally {
             cursor.close();
         }
@@ -667,16 +667,17 @@ public class QueryTest extends DatabaseTestCase {
         database.tryCreateView(view);
 
         Query fromView = Query.fromView(view).orderBy(view.qualifyField(Employee.ID).asc());
+        StringProperty qualifiedName = view.qualifyField(Employee.NAME);
 
         SquidCursor<Employee> cursor = database.query(Employee.class, fromView);
         try {
             assertEquals(3, cursor.getCount());
             cursor.moveToFirst();
-            assertEquals("cookieMonster", cursor.get(Employee.NAME));
+            assertEquals("cookieMonster", cursor.get(qualifiedName));
             cursor.moveToNext();
-            assertEquals("elmo", cursor.get(Employee.NAME));
+            assertEquals("elmo", cursor.get(qualifiedName));
             cursor.moveToNext();
-            assertEquals("oscar", cursor.get(Employee.NAME));
+            assertEquals("oscar", cursor.get(qualifiedName));
         } finally {
             cursor.close();
         }

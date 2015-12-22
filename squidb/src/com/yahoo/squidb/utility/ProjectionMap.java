@@ -6,6 +6,7 @@
 package com.yahoo.squidb.utility;
 
 import com.yahoo.squidb.sql.Field;
+import com.yahoo.squidb.sql.Property;
 import com.yahoo.squidb.sql.SqlUtils;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class ProjectionMap {
         if (SqlUtils.isEmpty(name)) {
             throw new IllegalArgumentException("Cannot use empty string as a key");
         }
-        if (!SqlUtils.equals(name, column.getName())) {
+        if (!SqlUtils.equals(name, columnName(column))) {
             column = column.as(name);
         }
         return map.put(name, column);
@@ -68,7 +69,11 @@ public class ProjectionMap {
         if (column == null) {
             throw new IllegalArgumentException("Cannot use null column in ProjectionMap");
         }
-        return map.put(column.getName(), column);
+        return map.put(columnName(column), column);
+    }
+
+    private String columnName(Field<?> column) {
+        return (column instanceof Property<?>) ? ((Property<?>) column).getSelectName() : column.getName();
     }
 
     /**

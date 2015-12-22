@@ -51,12 +51,8 @@ public abstract class TableStatement extends CompilableWithArguments implements 
 
     private CompiledArgumentResolver compiledArgumentResolver = null;
 
-    protected int getDefaultFlags() {
-        return 0;
-    }
-
     public final synchronized CompiledStatement compile(VersionCode sqliteVersion) {
-        return compile(sqliteVersion, getDefaultFlags());
+        return compile(sqliteVersion, defaultFlags());
     }
 
     @Override
@@ -69,7 +65,7 @@ public abstract class TableStatement extends CompilableWithArguments implements 
     }
 
     public final String sqlForValidation(VersionCode sqliteVersion) {
-        return sqlForValidation(sqliteVersion, getDefaultFlags());
+        return sqlForValidation(sqliteVersion, defaultFlags());
     }
 
     public final String sqlForValidation(VersionCode sqliteVersion, int flags) {

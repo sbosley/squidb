@@ -20,10 +20,11 @@ import java.util.List;
 
 public class ContentProviderQueryBuilderTest extends DatabaseTestCase {
 
+    private static final String COL_ID = TestModel.ID.getSelectName();
     private static final String COL_GIVEN_NAME = "given_name";
     private static final String COL_SURNAME = "surname";
-    private static final String COL_LUCKY_NUMBER = TestModel.LUCKY_NUMBER.getName();
-    private static final String COL_IS_HAPPY = TestModel.IS_HAPPY.getName();
+    private static final String COL_LUCKY_NUMBER = TestModel.LUCKY_NUMBER.getSelectName();
+    private static final String COL_IS_HAPPY = TestModel.IS_HAPPY.getSelectName();
 
     private TestModel model1;
     private TestModel model2;
@@ -185,7 +186,7 @@ public class ContentProviderQueryBuilderTest extends DatabaseTestCase {
 
     private TestModel buildModelFromCursor(ICursor cursor) {
         TestModel model = new TestModel();
-        model.setId(cursor.getLong(cursor.getColumnIndex("_id")));
+        model.setId(cursor.getLong(cursor.getColumnIndex(COL_ID)));
         model.setFirstName(cursor.getString(cursor.getColumnIndex(COL_GIVEN_NAME)));
         model.setLastName(cursor.getString(cursor.getColumnIndex(COL_SURNAME)));
         model.setLuckyNumber(cursor.getInt(cursor.getColumnIndex(COL_LUCKY_NUMBER)));

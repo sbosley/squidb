@@ -508,7 +508,7 @@ public final class Query extends TableStatement {
     }
 
     @Override
-    protected int getDefaultFlags() {
+    protected int defaultFlags() {
         return SqlBuilder.FLAG_TOP_LEVEL_SELECT;
     }
 

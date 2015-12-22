@@ -65,7 +65,7 @@ public class TriggerTest extends DatabaseTestCase {
 
         testThrowsException(new Runnable() {
             public void run() {
-                trigger.compile(database.getSqliteVersion());
+                trigger.compile(database.getSqliteVersion(), 0);
             }
         }, IllegalStateException.class);
     }
@@ -76,7 +76,7 @@ public class TriggerTest extends DatabaseTestCase {
 
         testThrowsException(new Runnable() {
             public void run() {
-                trigger.compile(database.getSqliteVersion());
+                trigger.compile(database.getSqliteVersion(), 0);
             }
         }, IllegalStateException.class);
     }
@@ -106,7 +106,7 @@ public class TriggerTest extends DatabaseTestCase {
                 .updateOn(TriggerTester.TABLE, TriggerTester.VALUE_1)
                 .perform(Update.table(TriggerTester.TABLE).set(TriggerTester.VALUE_2, TriggerTester.VALUE_1)
                         .where(TriggerTester.ID.eq(Trigger.newValueOf(TriggerTester.ID))));
-        CompiledStatement compiledTrigger = trigger.compile(database.getSqliteVersion());
+        CompiledStatement compiledTrigger = trigger.compile(database.getSqliteVersion(), 0);
 
         verifyCompiledSqlArgs(compiledTrigger, 0);
 
@@ -149,7 +149,7 @@ public class TriggerTest extends DatabaseTestCase {
                 .updateOn(TriggerTester.TABLE, TriggerTester.VALUE_1)
                 .perform(Update.table(TriggerTester.TABLE).set(TriggerTester.VALUE_2, TriggerTester.VALUE_1)
                         .where(TriggerTester.ID.eq(Trigger.newValueOf(TriggerTester.ID))));
-        CompiledStatement compiledTrigger = trigger.compile(database.getSqliteVersion());
+        CompiledStatement compiledTrigger = trigger.compile(database.getSqliteVersion(), 0);
 
         verifyCompiledSqlArgs(compiledTrigger, 0);
 
@@ -241,7 +241,7 @@ public class TriggerTest extends DatabaseTestCase {
                 .insertOn(Thing.TABLE)
                 .when(Trigger.newValueOf(Thing.BAR).gt(threshold))
                 .perform(insert);
-        CompiledStatement compiledTrigger = trigger.compile(database.getSqliteVersion());
+        CompiledStatement compiledTrigger = trigger.compile(database.getSqliteVersion(), 0);
 
         verifyCompiledSqlArgs(compiledTrigger, 0);
 
@@ -292,13 +292,13 @@ public class TriggerTest extends DatabaseTestCase {
                 .perform(Insert.into(TriggerTester.TABLE).columns(TriggerTester.VALUE_1, TriggerTester.VALUE_2)
                         .values(oldLuckyNumber, newLuckyNumber));
 
-        CompiledStatement compiledLogInsert = logInsertLucky.compile(database.getSqliteVersion());
+        CompiledStatement compiledLogInsert = logInsertLucky.compile(database.getSqliteVersion(), 0);
         verifyCompiledSqlArgs(compiledLogInsert, 0);
 
-        CompiledStatement compiledLogDelete = logDeleteLucky.compile(database.getSqliteVersion());
+        CompiledStatement compiledLogDelete = logDeleteLucky.compile(database.getSqliteVersion(), 0);
         verifyCompiledSqlArgs(compiledLogDelete, 0);
 
-        CompiledStatement compiledLogUpdate = logUpdateLucky.compile(database.getSqliteVersion());
+        CompiledStatement compiledLogUpdate = logUpdateLucky.compile(database.getSqliteVersion(), 0);
         verifyCompiledSqlArgs(compiledLogUpdate, 0);
 
         database.tryExecSql(compiledLogInsert.sql, compiledLogInsert.sqlArgs);

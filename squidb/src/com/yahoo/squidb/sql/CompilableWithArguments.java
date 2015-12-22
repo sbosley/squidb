@@ -15,7 +15,7 @@ abstract class CompilableWithArguments {
     }
 
     public final String toRawSql(VersionCode sqliteVersion) {
-        return toRawSql(sqliteVersion, 0);
+        return toRawSql(sqliteVersion, defaultFlags());
     }
 
     public final String toRawSql(VersionCode sqliteVersion, int flags) {
@@ -28,6 +28,10 @@ abstract class CompilableWithArguments {
         builder.setFlag(flags);
         appendToSqlBuilder(builder, forSqlValidation);
         return builder;
+    }
+
+    protected int defaultFlags() {
+        return 0;
     }
 
     abstract void appendToSqlBuilder(SqlBuilder builder, boolean forSqlValidation);

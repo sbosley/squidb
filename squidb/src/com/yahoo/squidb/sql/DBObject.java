@@ -30,7 +30,7 @@ abstract class DBObject<T extends DBObject<?>> extends CompilableWithArguments i
     protected DBObject(String expression, String qualifier) {
         this.expression = expression;
         this.qualifier = qualifier;
-        this.defaultAlias = ((qualifier == null) ? "" : qualifier) + "_" + expression;
+        this.defaultAlias = ((qualifier == null) ? "" : qualifier + "_") + expression;
     }
 
     /**
