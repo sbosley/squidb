@@ -94,6 +94,6 @@ public class View extends QueryTable {
         }
         sql.append("VIEW IF NOT EXISTS ")
                 .append(getExpression()).append(" AS ")
-                .append(query.toRawSql(sqliteVersion));
+                .append(query.toRawSql(sqliteVersion, 0));
     }
 }

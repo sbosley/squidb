@@ -552,11 +552,10 @@ public final class Query extends TableStatement {
                 }
                 needSeparator = true;
                 field.appendQualifiedExpression(builder, forSqlValidation);
-                builder.sql.append(" AS ");
                 if (field.hasAlias()) {
-                    builder.sql.append(field.getName());
-                } else {
-                    builder.sql.append(field.getDefaultAlias());
+                    builder.sql.append(" AS ").append(field.getName());
+                } else if (field.hasQualifier()) {
+                    builder.sql.append(" AS ").append(field.getDefaultAlias());
                 }
             }
         } else {

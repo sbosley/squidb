@@ -69,10 +69,10 @@ public class ProjectionMapTest extends SquidTestCase {
         assertEquals(key, field.getName());
     }
 
-    public void testPutUsesFieldName() {
+    public void testPutUsesSelectName() {
         ProjectionMap map = new ProjectionMap();
         map.put(TestModel.FIRST_NAME);
-        assertEquals(TestModel.FIRST_NAME, map.get(TestModel.FIRST_NAME.getName()));
+        assertEquals(TestModel.FIRST_NAME, map.get(TestModel.FIRST_NAME.getSelectName()));
     }
 
     public void testDefaultProjection() {
@@ -83,8 +83,8 @@ public class ProjectionMapTest extends SquidTestCase {
         columns.add(TestModel.LAST_NAME);
         columns.add(TestModel.BIRTHDAY.as(BIRTHDAY));
         columns.add(Field.field(IS_HAPPY));
-        final String[] columnNames = {TestModel.FIRST_NAME.getName(), TestModel.LAST_NAME.getName(), BIRTHDAY,
-                IS_HAPPY};
+        final String[] columnNames = {TestModel.FIRST_NAME.getSelectName(), TestModel.LAST_NAME.getSelectName(),
+                BIRTHDAY, IS_HAPPY};
 
         ProjectionMap map = new ProjectionMap();
         map.put(TestModel.FIRST_NAME);
@@ -110,8 +110,8 @@ public class ProjectionMapTest extends SquidTestCase {
         ProjectionMap copy = new ProjectionMap(base);
         copy.put("blah2");
 
-        assertEquals(TestModel.FIRST_NAME, copy.get(TestModel.FIRST_NAME.getName()));
-        assertEquals(TestModel.LAST_NAME, copy.get(TestModel.LAST_NAME.getName()));
+        assertEquals(TestModel.FIRST_NAME, copy.get(TestModel.FIRST_NAME.getSelectName()));
+        assertEquals(TestModel.LAST_NAME, copy.get(TestModel.LAST_NAME.getSelectName()));
         assertNotNull(copy.get("blah"));
         assertNotNull(copy.get("blah2"));
         assertNull(base.get("blah2"));
