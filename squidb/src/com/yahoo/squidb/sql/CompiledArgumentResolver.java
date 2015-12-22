@@ -35,7 +35,7 @@ class CompiledArgumentResolver {
     public CompiledArgumentResolver(SqlBuilder builder) {
         this.compiledSql = builder.getSqlString();
         this.sqlArgs = builder.getBoundArguments();
-        this.needsValidation = builder.needsValidation();
+        this.needsValidation = builder.getFlag(SqlBuilder.FLAG_NEEDS_VALIDATION);
         if (compiledSql.contains(SqlStatement.REPLACEABLE_ARRAY_PARAMETER)) {
             collectionArgs = new ArrayList<>();
             findCollectionArgs();

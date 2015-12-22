@@ -1281,7 +1281,7 @@ public abstract class SquidDatabase {
      * @return true if the statement executed without error, false otherwise
      */
     public boolean tryExecStatement(SqlStatement statement) {
-        CompiledStatement compiled = statement.compile(getSqliteVersion());
+        CompiledStatement compiled = statement.compile(getSqliteVersion(), 0);
         return tryExecSql(compiled.sql, compiled.sqlArgs);
     }
 

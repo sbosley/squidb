@@ -15,12 +15,17 @@ abstract class CompilableWithArguments {
     }
 
     public final String toRawSql(VersionCode sqliteVersion) {
-        return buildSql(sqliteVersion, false, false).getSqlString();
+        return toRawSql(sqliteVersion, 0);
+    }
+
+    public final String toRawSql(VersionCode sqliteVersion, int flags) {
+        return buildSql(sqliteVersion, false, false, flags).getSqlString();
     }
 
     protected final SqlBuilder buildSql(VersionCode sqliteVersion, boolean withBoundArguments,
-            boolean forSqlValidation) {
+            boolean forSqlValidation, int flags) {
         SqlBuilder builder = new SqlBuilder(sqliteVersion, withBoundArguments);
+        builder.setFlag(flags);
         appendToSqlBuilder(builder, forSqlValidation);
         return builder;
     }

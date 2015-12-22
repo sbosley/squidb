@@ -51,17 +51,29 @@ public abstract class TableStatement extends CompilableWithArguments implements 
 
     private CompiledArgumentResolver compiledArgumentResolver = null;
 
-    @Override
+    protected int getDefaultFlags() {
+        return 0;
+    }
+
     public final synchronized CompiledStatement compile(VersionCode sqliteVersion) {
+        return compile(sqliteVersion, getDefaultFlags());
+    }
+
+    @Override
+    public final synchronized CompiledStatement compile(VersionCode sqliteVersion, int flags) {
         if (compiledArgumentResolver == null) {
-            SqlBuilder builder = buildSql(sqliteVersion, true, false);
+            SqlBuilder builder = buildSql(sqliteVersion, true, false, flags);
             compiledArgumentResolver = new CompiledArgumentResolver(builder);
         }
         return compiledArgumentResolver.resolveToCompiledStatement();
     }
 
     public final String sqlForValidation(VersionCode sqliteVersion) {
-        SqlBuilder builder = buildSql(sqliteVersion, true, true);
+        return sqlForValidation(sqliteVersion, getDefaultFlags());
+    }
+
+    public final String sqlForValidation(VersionCode sqliteVersion, int flags) {
+        SqlBuilder builder = buildSql(sqliteVersion, true, true, flags);
         return new CompiledArgumentResolver(builder).resolveToCompiledStatement().sql;
     }
 

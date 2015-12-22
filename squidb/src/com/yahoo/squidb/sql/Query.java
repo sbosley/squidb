@@ -508,6 +508,11 @@ public final class Query extends TableStatement {
     }
 
     @Override
+    protected int getDefaultFlags() {
+        return SqlBuilder.FLAG_TOP_LEVEL_SELECT;
+    }
+
+    @Override
     void appendToSqlBuilder(SqlBuilder builder, boolean forSqlValidation) {
         visitSelectClause(builder, forSqlValidation);
         visitFromClause(builder, forSqlValidation);
@@ -519,7 +524,7 @@ public final class Query extends TableStatement {
         visitLimitClause(builder, forSqlValidation);
 
         if (needsValidation) {
-            builder.setNeedsValidation();
+            builder.setFlag(SqlBuilder.FLAG_NEEDS_VALIDATION);
         }
     }
 
@@ -537,8 +542,26 @@ public final class Query extends TableStatement {
             toSelect = fields;
         }
 
-        // TODO: Only want to use select name for top level select clause
-        builder.appendConcatenatedCompilables(toSelect, ", ", forSqlValidation);
+        // Only want to use unique alias for top level select clause
+        if (builder.getFlag(SqlBuilder.FLAG_TOP_LEVEL_SELECT)) {
+            builder.clearFlag(SqlBuilder.FLAG_TOP_LEVEL_SELECT);
+            boolean needSeparator = false;
+            for (Field<?> field : toSelect) {
+                if (needSeparator) {
+                    builder.sql.append(", ");
+                }
+                needSeparator = true;
+                field.appendQualifiedExpression(builder, forSqlValidation);
+                builder.sql.append(" AS ");
+                if (field.hasAlias()) {
+                    builder.sql.append(field.getName());
+                } else {
+                    builder.sql.append(field.getDefaultAlias());
+                }
+            }
+        } else {
+            builder.appendConcatenatedCompilables(toSelect, ", ", forSqlValidation);
+        }
     }
 
     private void visitFromClause(SqlBuilder builder, boolean forSqlValidation) {

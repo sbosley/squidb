@@ -281,9 +281,9 @@ public class Trigger extends DBObject<Trigger> implements SqlStatement {
     }
 
     @Override
-    public CompiledStatement compile(VersionCode sqliteVersion) {
+    public CompiledStatement compile(VersionCode sqliteVersion, int flags) {
         // Android's argument binding doesn't handle trigger statements, so we settle for a sanitized sql statement.
-        return new CompiledStatement(toRawSql(sqliteVersion), EMPTY_ARGS, false);
+        return new CompiledStatement(toRawSql(sqliteVersion, flags), EMPTY_ARGS, false);
     }
 
     @Override

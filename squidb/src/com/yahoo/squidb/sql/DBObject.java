@@ -126,6 +126,10 @@ abstract class DBObject<T extends DBObject<?>> extends CompilableWithArguments i
         return getExpression();
     }
 
+    public final String getDefaultAlias() {
+        return defaultAlias;
+    }
+
     /**
      * @return the string-literal representation of this object
      */
@@ -154,7 +158,7 @@ abstract class DBObject<T extends DBObject<?>> extends CompilableWithArguments i
         if (hasAlias()) {
             builder.sql.append(" AS ").append(alias);
         } else if (hasQualifier()) {
-            builder.sql.append(" AS ").append(defaultAlias);
+            builder.sql.append(" AS ").append(expression);
         }
     }
 

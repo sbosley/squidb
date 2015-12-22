@@ -13,12 +13,15 @@ import java.util.List;
 
 public final class SqlBuilder {
 
+    public static final int FLAG_NEEDS_VALIDATION = 1;
+    public static final int FLAG_TOP_LEVEL_SELECT = 1 << 1;
+
     private static final int STRING_BUILDER_INITIAL_CAPACITY = 128;
 
     public final StringBuilder sql = new StringBuilder(STRING_BUILDER_INITIAL_CAPACITY);
     public final VersionCode sqliteVersion;
     final List<Object> args;
-    private boolean needsValidation = false;
+    private int flags = 0;
 
     SqlBuilder(VersionCode sqliteVersion, boolean withBoundArguments) {
         this.sqliteVersion = sqliteVersion;
@@ -40,17 +43,28 @@ public final class SqlBuilder {
     }
 
     /**
-     * @return true if the statement has been flagged as needing validation (only relevant for Query objects)
+     * @return true if the given flag is set
      */
-    public boolean needsValidation() {
-        return needsValidation;
+    public boolean getFlag(int flag) {
+        return (flags & flag) > 0;
     }
 
     /**
-     * Sets a flag indicating that the statement being built by this SqlBuilder needs to be validated
+     * Set the given flag to true
+     *
+     * @param flag the flag to set
      */
-    public void setNeedsValidation() {
-        needsValidation = true;
+    public void setFlag(int flag) {
+        flags |= flag;
+    }
+
+    /**
+     * Clears the given flag
+     *
+     * @param flag the flag to clear
+     */
+    public void clearFlag(int flag) {
+        flags &= ~flag;
     }
 
     /**
