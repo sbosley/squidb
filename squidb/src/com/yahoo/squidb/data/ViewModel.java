@@ -281,14 +281,12 @@ public abstract class ViewModel extends AbstractModel {
 
             propertyList.add(p);
 
-            if (!p.getName().equals(baseProperty.getName())) {
-                Map<Property<?>, Property<?>> aliasedForTable = aliasedPropertiesMap.get(table);
-                if (aliasedForTable == null) {
-                    aliasedForTable = new HashMap<>();
-                    aliasedPropertiesMap.put(table, aliasedForTable);
-                }
-                aliasedForTable.put(p, baseProperty);
+            Map<Property<?>, Property<?>> aliasedForTable = aliasedPropertiesMap.get(table);
+            if (aliasedForTable == null) {
+                aliasedForTable = new HashMap<>();
+                aliasedPropertiesMap.put(table, aliasedForTable);
             }
+            aliasedForTable.put(p, baseProperty);
         }
 
         for (Map.Entry<TableModelName, List<Property<?>>> entry : tableToPropertyMap.entrySet()) {
