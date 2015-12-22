@@ -59,6 +59,7 @@ public abstract class AndroidTableModel extends TableModel implements Parcelable
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeParcelable((ContentValuesStorage) setValues, 0);
         dest.writeParcelable((ContentValuesStorage) values, 0);
+        dest.writeParcelable((ContentValuesStorage) otherTableValues, 0);
     }
 
     @Override
@@ -70,5 +71,6 @@ public abstract class AndroidTableModel extends TableModel implements Parcelable
         Parcel parcel = (Parcel) source;
         this.setValues = parcel.readParcelable(ContentValuesStorage.class.getClassLoader());
         this.values = parcel.readParcelable(ContentValuesStorage.class.getClassLoader());
+        this.otherTableValues = parcel.readParcelable(ContentValuesStorage.class.getClassLoader());
     }
 }

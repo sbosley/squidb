@@ -130,6 +130,11 @@ public abstract class AbstractModel implements Cloneable {
         return mergedValues;
     }
 
+    /** Get any values that have been read into this model but belong to some other table */
+    public ValuesStorage getOtherTableValues() {
+        return otherTableValues;
+    }
+
     /**
      * This method should construct a new ValuesStorage object for the model instance to use. By default, this object
      * will be a {@link MapValuesStorage}, but other implementations can be used for other platforms if appropriate
