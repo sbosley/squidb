@@ -537,6 +537,7 @@ public final class Query extends TableStatement {
             toSelect = fields;
         }
 
+        // TODO: Only want to use select name for top level select clause
         builder.appendConcatenatedCompilables(toSelect, ", ", forSqlValidation);
     }
 

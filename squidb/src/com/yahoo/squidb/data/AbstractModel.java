@@ -69,6 +69,7 @@ public abstract class AbstractModel implements Cloneable {
     // --- static variables
 
     private static final ValuesStorageSavingVisitor saver = new ValuesStorageSavingVisitor();
+    private static final ValuesStorageSavingVisitor otherTableSaver = new OtherTableValuesStorageSavingVisitor();
 
     private static final ValueCastingVisitor valueCastingVisitor = new ValueCastingVisitor();
 
@@ -84,6 +85,8 @@ public abstract class AbstractModel implements Cloneable {
     public abstract ValuesStorage getDefaultValues();
 
     // --- data store variables and management
+
+    protected final SqlTable<?> table = getSqlTable();
 
     /** User set values */
     protected ValuesStorage setValues = null;
@@ -234,13 +237,21 @@ public abstract class AbstractModel implements Cloneable {
      * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void readPropertiesFromValuesStorage(ValuesStorage values, Property<?>... properties) {
-        // TODO: Handle properties not from this model
         prepareToReadProperties();
 
         if (values != null) {
             for (Property<?> property : properties) {
-                if (values.containsKey(property.getName())) {
-                    this.values.put(property.getName(), getFromValues(property, values), true);
+                String key = property.getNameForModelStorage(table);
+                ValuesStorage valuesStorage;
+                if (property.table == table) {
+                    valuesStorage = this.values;
+                } else {
+                    valuesStorage = otherTableValues;
+                }
+
+                if (values.containsKey(key)) {
+                    Object value = property.accept(valueCastingVisitor, values.get(key));
+                    valuesStorage.put(key, value, true);
                 }
             }
         }
@@ -292,7 +303,11 @@ public abstract class AbstractModel implements Cloneable {
         if (values == null) {
             values = newValuesStorage();
         }
-        // TODO: Do anything with otherTableValues?
+
+        if (otherTableValues == null) {
+            otherTableValues = newValuesStorage();
+        }
+
         // clears user-set values
         setValues = null;
         transitoryData = null;
@@ -301,14 +316,14 @@ public abstract class AbstractModel implements Cloneable {
     private void readPropertyIntoModel(SquidCursor<?> cursor, Property<?> property) {
         try {
             ValuesStorage valuesStorage = values;
-            if (property.table != getSqlTable()) {
-                if (otherTableValues == null) {
-                    otherTableValues = newValuesStorage();
-                }
+            ValuesStorageSavingVisitor valuesSaver = saver;
+            if (property.table != table) {
                 valuesStorage = otherTableValues;
+                valuesSaver = otherTableSaver;
             }
-            // TODO: Handle autoalias case
-            saver.save(property, valuesStorage, cursor.get(property));
+            if (cursor.has(property)) {
+                valuesSaver.save(property, valuesStorage, cursor.get(property));
+            }
         } catch (IllegalArgumentException e) {
             // underlying cursor may have changed, suppress
         }
@@ -321,6 +336,8 @@ public abstract class AbstractModel implements Cloneable {
      * <li>values written to the model as a result of fetching it using a {@link SquidDatabase} or constructing it from
      * a {@link SquidCursor}</li>
      * <li>the set of default values as specified by {@link #getDefaultValues()}</li>
+     * <li>values for properties that are not a part of this model class are stored separately, which will be
+     * checked if and only if the given property is not native to this model class</li>
      * </ol>
      * If a value is not found in any of those places, an exception is thrown.
      *
@@ -329,24 +346,52 @@ public abstract class AbstractModel implements Cloneable {
      */
     @SuppressWarnings("unchecked")
     public <TYPE> TYPE get(Property<TYPE> property) {
-        // TODO: Handle properties not from this model
-        if (setValues != null && setValues.containsKey(property.getName())) {
-            return getFromValues(property, setValues);
-        } else if (values != null && values.containsKey(property.getName())) {
-            return getFromValues(property, values);
-        } else if (getDefaultValues().containsKey(property.getName())) {
-            return getFromValues(property, getDefaultValues());
+        return get(property, true);
+    }
+
+    /**
+     * Return the value of the specified {@link Property}. The model prioritizes values as follows:
+     * <ol>
+     * <li>values explicitly set using {@link #set(Property, Object)} or a generated setter</li>
+     * <li>values written to the model as a result of fetching it using a {@link SquidDatabase} or constructing it from
+     * a {@link SquidCursor}</li>
+     * <li>the set of default values as specified by {@link #getDefaultValues()}</li>
+     * <li>values for properties that are not a part of this model class are stored separately, which will be
+     * checked if and only if the given property is not native to this model class</li>
+     * </ol>
+     * If a value is not found in any of those places, an exception is thrown if throwIfNotFound is true, or null is
+     * returned if it is false.
+     *
+     * @return the value of the specified property, or null if the value is not found and throwIfNotFound is false
+     * @throws UnsupportedOperationException if the value is not found in the model and throwIfNotFound is true
+     */
+    public <TYPE> TYPE get(Property<TYPE> property, boolean throwIfNotFound) {
+        if (property.table != table) {
+            if (otherTableValues != null && otherTableValues.containsKey(property.getSelectName())) {
+                return getFromValues(property, otherTableValues);
+            }
         } else {
+            if (setValues != null && setValues.containsKey(property.getName())) {
+                return getFromValues(property, setValues);
+            } else if (values != null && values.containsKey(property.getName())) {
+                return getFromValues(property, values);
+            } else if (getDefaultValues().containsKey(property.getName())) {
+                return getFromValues(property, getDefaultValues());
+            }
+        }
+
+        if (throwIfNotFound) {
             throw new UnsupportedOperationException(property.getName()
                     + " not found in model. Make sure the value was set explicitly, read from a cursor,"
                     + " or that the model has a default value for this property.");
+        } else {
+            return null;
         }
     }
 
     @SuppressWarnings("unchecked")
     private <TYPE> TYPE getFromValues(Property<TYPE> property, ValuesStorage values) {
-        // TODO: Handle properties not from this model/autoalias case
-        Object value = values.get(property.getName());
+        Object value = values.get(property.getNameForModelStorage(table));
 
         // Will throw a ClassCastException if the value could not be coerced to the correct type
         return (TYPE) property.accept(valueCastingVisitor, value);
@@ -357,8 +402,11 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if a value for this property has been read from the database or set by the user
      */
     public boolean containsValue(Property<?> property) {
-        // TODO: Handle properties not from this model
-        return valuesContainsKey(setValues, property) || valuesContainsKey(values, property);
+        if (property.table == table) {
+            return valuesContainsKey(setValues, property, false) || valuesContainsKey(values, property, false);
+        } else {
+            return valuesContainsKey(otherTableValues, property, true);
+        }
     }
 
     /**
@@ -367,9 +415,13 @@ public abstract class AbstractModel implements Cloneable {
      * stored is not null
      */
     public boolean containsNonNullValue(Property<?> property) {
-        // TODO: Handle properties not from this model
-        return (valuesContainsKey(setValues, property) && setValues.get(property.getName()) != null)
-                || (valuesContainsKey(values, property) && values.get(property.getName()) != null);
+        if (property.table == table) {
+            return (valuesContainsKey(setValues, property, false) && setValues.get(property.getName()) != null)
+                    || (valuesContainsKey(values, property, false) && values.get(property.getName()) != null);
+        } else {
+            return (valuesContainsKey(otherTableValues, property, true) &&
+                    otherTableValues.get(property.getSelectName()) != null);
+        }
     }
 
     /**
@@ -377,13 +429,11 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if this property has a value that was set by the user
      */
     public boolean fieldIsDirty(Property<?> property) {
-        // TODO: Handle properties not from this model
-        return valuesContainsKey(setValues, property);
+        return property.table == table && valuesContainsKey(setValues, property, false);
     }
 
-    private boolean valuesContainsKey(ValuesStorage values, Property<?> property) {
-        // TODO: Handle properties not from this model/autoalias case
-        return values != null && values.containsKey(property.getName());
+    private boolean valuesContainsKey(ValuesStorage values, Property<?> property, boolean useSelectName) {
+        return values != null && values.containsKey(useSelectName ? property.getSelectName() : property.getName());
     }
 
     // --- data storage
@@ -392,8 +442,7 @@ public abstract class AbstractModel implements Cloneable {
      * Check whether the user has changed this property value and it should be stored for saving in the database
      */
     protected <TYPE> boolean shouldSaveValue(Property<TYPE> property, TYPE newValue) {
-        // TODO: Handle properties not from this model/autoalias case
-        return shouldSaveValue(property.getName(), newValue);
+        return property.table != table || shouldSaveValue(property.getName(), newValue);
     }
 
     protected boolean shouldSaveValue(String name, Object newValue) {
@@ -426,16 +475,24 @@ public abstract class AbstractModel implements Cloneable {
      * @param value the new value for the property
      */
     public <TYPE> void set(Property<TYPE> property, TYPE value) {
-        // TODO: Handle properties not from this model
         if (setValues == null) {
             setValues = newValuesStorage();
+        }
+        if (otherTableValues == null) {
+            otherTableValues = newValuesStorage();
         }
 
         if (!shouldSaveValue(property, value)) {
             return;
         }
 
-        saver.save(property, setValues, value);
+        ValuesStorage valuesStorage = setValues;
+        ValuesStorageSavingVisitor valuesSaver = saver;
+        if (property.table != table) {
+            valuesStorage = otherTableValues;
+            valuesSaver = otherTableSaver;
+        }
+        valuesSaver.save(property, valuesStorage, value);
     }
 
     /**
@@ -446,17 +503,21 @@ public abstract class AbstractModel implements Cloneable {
      * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void setPropertiesFromValuesStorage(ValuesStorage values, Property<?>... properties) {
-        // TODO: Handle properties not from this model
         if (values != null) {
             if (setValues == null) {
                 setValues = newValuesStorage();
             }
+            if (otherTableValues == null) {
+                otherTableValues = newValuesStorage();
+            }
             for (Property<?> property : properties) {
-                String key = property.getName();
+                String key = property.getNameForModelStorage(table);
+                ValuesStorage valuesStorage = property.table == table ? setValues : otherTableValues;
+
                 if (values.containsKey(key)) {
                     Object value = property.accept(valueCastingVisitor, values.get(key));
-                    if (shouldSaveValue(key, value)) {
-                        this.setValues.put(property.getName(), value, true);
+                    if (property.table != table || shouldSaveValue(key, value)) {
+                        valuesStorage.put(key, value, true);
                     }
                 }
             }
@@ -471,7 +532,6 @@ public abstract class AbstractModel implements Cloneable {
      * @param properties which properties to read from the values. Only properties specified in this list will be read
      */
     public void setPropertiesFromMap(Map<String, Object> values, Property<?>... properties) {
-        // TODO: Handle properties not from this model
         if (values == null) {
             return;
         }
@@ -484,15 +544,19 @@ public abstract class AbstractModel implements Cloneable {
      * @param property the property to clear
      */
     public void clearValue(Property<?> property) {
-        if (setValues != null && setValues.containsKey(property.getName())) {
-            setValues.remove(property.getName());
-        }
+        if (property.table == table) {
+            if (setValues != null && setValues.containsKey(property.getName())) {
+                setValues.remove(property.getName());
+            }
 
-        if (values != null && values.containsKey(property.getName())) {
-            values.remove(property.getName());
+            if (values != null && values.containsKey(property.getName())) {
+                values.remove(property.getName());
+            }
+        } else {
+            if (otherTableValues != null && otherTableValues.containsKey(property.getSelectName())) {
+                otherTableValues.remove(property.getSelectName());
+            }
         }
-
-        // TODO: Handle properties not from this model
     }
 
     // --- storing and retrieving transitory values
@@ -582,50 +646,61 @@ public abstract class AbstractModel implements Cloneable {
             if (value != null) {
                 property.accept(this, newStore, value);
             } else {
-                newStore.putNull(property.getName());
+                newStore.putNull(getStorageName(property));
             }
         }
 
         @Override
         public Void visitDouble(Property<Double> property, ValuesStorage dst, Object value) {
-            dst.put(property.getName(), (Double) value);
+            dst.put(getStorageName(property), (Double) value);
             return null;
         }
 
         @Override
         public Void visitInteger(Property<Integer> property, ValuesStorage dst, Object value) {
-            dst.put(property.getName(), (Integer) value);
+            dst.put(getStorageName(property), (Integer) value);
             return null;
         }
 
         @Override
         public Void visitLong(Property<Long> property, ValuesStorage dst, Object value) {
-            dst.put(property.getName(), (Long) value);
+            dst.put(getStorageName(property), (Long) value);
             return null;
         }
 
         @Override
         public Void visitString(Property<String> property, ValuesStorage dst, Object value) {
-            dst.put(property.getName(), (String) value);
+            dst.put(getStorageName(property), (String) value);
             return null;
         }
 
         @Override
         public Void visitBoolean(Property<Boolean> property, ValuesStorage dst, Object value) {
             if (value instanceof Boolean) {
-                dst.put(property.getName(), (Boolean) value);
+                dst.put(getStorageName(property), (Boolean) value);
             } else if (value instanceof Integer) {
-                dst.put(property.getName(), ((Integer) value) != 0);
+                dst.put(getStorageName(property), ((Integer) value) != 0);
             }
             return null;
         }
 
         @Override
         public Void visitBlob(Property<byte[]> property, ValuesStorage dst, Object value) {
-            dst.put(property.getName(), (byte[]) value);
+            dst.put(getStorageName(property), (byte[]) value);
             return null;
         }
 
+        protected String getStorageName(Property<?> property) {
+            return property.getName();
+        }
+    }
+
+    private static class OtherTableValuesStorageSavingVisitor extends ValuesStorageSavingVisitor {
+
+        @Override
+        protected String getStorageName(Property<?> property) {
+            return property.getSelectName();
+        }
     }
 
     private static class ValueCastingVisitor implements PropertyVisitor<Object, Object> {

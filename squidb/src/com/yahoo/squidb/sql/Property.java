@@ -91,6 +91,29 @@ public abstract class Property<TYPE> extends Field<TYPE> implements Cloneable {
         return super.getExpression();
     }
 
+    /**
+     * @return the name that should be used when storing a value for this property in a model with the given table.
+     * If the provided table is the same as the table associated with this property, the result will be the result
+     * of {@link #getName()}. Otherwise, it will be the result of {@link #getSelectName()}
+     */
+    public String getNameForModelStorage(SqlTable<?> modelTable) {
+        if (modelTable == table) {
+            return getName();
+        } else {
+            return getSelectName();
+        }
+    }
+
+    /**
+     * @return the name used when this property appears in a SELECT clause
+     */
+    public String getSelectName() {
+        if (hasAlias()) {
+            return alias;
+        }
+        return defaultAlias;
+    }
+
     @Override
     protected String expressionForComparison() {
         if (function != null) {

@@ -13,6 +13,7 @@ abstract class DBObject<T extends DBObject<?>> extends CompilableWithArguments i
     protected String alias;
     protected final String expression;
     protected final String qualifier;
+    protected final String defaultAlias;
 
     /**
      * @param expression the string-literal representation of this object
@@ -29,6 +30,7 @@ abstract class DBObject<T extends DBObject<?>> extends CompilableWithArguments i
     protected DBObject(String expression, String qualifier) {
         this.expression = expression;
         this.qualifier = qualifier;
+        this.defaultAlias = ((qualifier == null) ? "" : qualifier) + "_" + expression;
     }
 
     /**
@@ -152,7 +154,7 @@ abstract class DBObject<T extends DBObject<?>> extends CompilableWithArguments i
         if (hasAlias()) {
             builder.sql.append(" AS ").append(alias);
         } else if (hasQualifier()) {
-            builder.sql.append(" AS ").append(expression);
+            builder.sql.append(" AS ").append(defaultAlias);
         }
     }
 

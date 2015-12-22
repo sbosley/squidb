@@ -62,6 +62,13 @@ public class SquidCursor<TYPE extends AbstractModel> implements ICursor {
     }
 
     /**
+     * @return true if the cursor has a column/value for the given property, false otherwise
+     */
+    public boolean has(Property<?> property) {
+        return cursor.getColumnIndex(property.getSelectName()) > -1;
+    }
+
+    /**
      * @return the {@link ICursor} backing this SquidCursor. If you are on Android and you need to pass this object
      * across process boundaries, and if this SquidCursor was obtained from a SquidDatabase, you can safely cast
      * the object returned by this method to an Android cursor
@@ -278,7 +285,7 @@ public class SquidCursor<TYPE extends AbstractModel> implements ICursor {
         }
 
         private int columnIndex(Property<?> property, SquidCursor<?> cursor) {
-            return cursor.getColumnIndexOrThrow(property.getName());
+            return cursor.getColumnIndexOrThrow(property.getSelectName());
         }
 
     }
