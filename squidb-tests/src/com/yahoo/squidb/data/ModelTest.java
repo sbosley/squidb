@@ -6,6 +6,7 @@
 package com.yahoo.squidb.data;
 
 import com.yahoo.squidb.sql.Property;
+import com.yahoo.squidb.sql.Property.StringProperty;
 import com.yahoo.squidb.sql.Query;
 import com.yahoo.squidb.test.DatabaseTestCase;
 import com.yahoo.squidb.test.TestEnum;
@@ -157,5 +158,22 @@ public class ModelTest extends DatabaseTestCase {
 
     public void testNonPublicConstantCopying() {
         assertEquals("somePackageProtectedConst", TestModel.PACKAGE_PROTECTED_CONST);
+    }
+
+    public void testGetAndSetOtherTableProperties() {
+        TestModel model = new TestModel();
+        model.set(Thing.ID, 2L);
+        assertTrue(model.getOtherTableValues().containsKey(Thing.ID.getSelectName()));
+        assertEquals(2L, model.get(Thing.ID).longValue());
+        assertEquals(TableModel.NO_ID, model.getId());
+        assertFalse(model.isModified()); // Other table values don't count as dirty/setValues
+
+        StringProperty simpleAliased = TestModel.FIRST_NAME.as("aliased_fname");
+        model.set(simpleAliased, "A");
+        assertTrue(model.getSetValues().containsKey(TestModel.FIRST_NAME.getExpression()));
+        assertEquals("A", model.get(simpleAliased));
+        assertTrue(model.isModified());
+        assertTrue(model.fieldIsDirty(simpleAliased));
+        assertTrue(model.fieldIsDirty(TestModel.FIRST_NAME));
     }
 }
