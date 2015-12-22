@@ -42,12 +42,12 @@ public class AndroidModelTest extends DatabaseTestCase {
 
     private void testContentValuesTypes(final boolean useSetValues) {
         final ContentValues values = new ContentValues();
-        values.put(TestModel.FIRST_NAME.getName(), "A");
-        values.put(TestModel.LAST_NAME.getName(), "B");
-        values.put(TestModel.BIRTHDAY.getName(), 1); // Putting an int where long expected
-        values.put(TestModel.IS_HAPPY.getName(), 1); // Putting an int where boolean expected
-        values.put(TestModel.SOME_DOUBLE.getName(), 1); // Putting an int where double expected
-        values.put(TestModel.$_123_ABC.getName(), "1"); // Putting a String where int expected
+        values.put(TestModel.FIRST_NAME.getExpression(), "A");
+        values.put(TestModel.LAST_NAME.getExpression(), "B");
+        values.put(TestModel.BIRTHDAY.getExpression(), 1); // Putting an int where long expected
+        values.put(TestModel.IS_HAPPY.getExpression(), 1); // Putting an int where boolean expected
+        values.put(TestModel.SOME_DOUBLE.getExpression(), 1); // Putting an int where double expected
+        values.put(TestModel.$_123_ABC.getExpression(), "1"); // Putting a String where int expected
 
         TestModel fromValues;
         if (useSetValues) {
@@ -59,12 +59,12 @@ public class AndroidModelTest extends DatabaseTestCase {
 
         // Check the types stored in the values
         ValuesStorage checkTypesOn = useSetValues ? fromValues.getSetValues() : fromValues.getDatabaseValues();
-        assertTrue(checkTypesOn.get(TestModel.FIRST_NAME.getName()) instanceof String);
-        assertTrue(checkTypesOn.get(TestModel.LAST_NAME.getName()) instanceof String);
-        assertTrue(checkTypesOn.get(TestModel.BIRTHDAY.getName()) instanceof Long);
-        assertTrue(checkTypesOn.get(TestModel.IS_HAPPY.getName()) instanceof Boolean);
-        assertTrue(checkTypesOn.get(TestModel.SOME_DOUBLE.getName()) instanceof Double);
-        assertTrue(checkTypesOn.get(TestModel.$_123_ABC.getName()) instanceof Integer);
+        assertTrue(checkTypesOn.get(TestModel.FIRST_NAME.getExpression()) instanceof String);
+        assertTrue(checkTypesOn.get(TestModel.LAST_NAME.getExpression()) instanceof String);
+        assertTrue(checkTypesOn.get(TestModel.BIRTHDAY.getExpression()) instanceof Long);
+        assertTrue(checkTypesOn.get(TestModel.IS_HAPPY.getExpression()) instanceof Boolean);
+        assertTrue(checkTypesOn.get(TestModel.SOME_DOUBLE.getExpression()) instanceof Double);
+        assertTrue(checkTypesOn.get(TestModel.$_123_ABC.getExpression()) instanceof Integer);
 
         // Check the types using the model getters
         assertEquals("A", fromValues.getFirstName());
@@ -75,7 +75,7 @@ public class AndroidModelTest extends DatabaseTestCase {
         assertEquals(1, fromValues.get$123abc().intValue());
 
         values.clear();
-        values.put(TestModel.IS_HAPPY.getName(), "ABC");
+        values.put(TestModel.IS_HAPPY.getExpression(), "ABC");
         testThrowsException(new Runnable() {
             @Override
             public void run() {
@@ -91,18 +91,18 @@ public class AndroidModelTest extends DatabaseTestCase {
     public void testValueCoercionAppliesToAllValues() {
         // Make sure the model is initialized with values and setValues
         ContentValues values = new ContentValues();
-        values.put(TestModel.FIRST_NAME.getName(), "A");
+        values.put(TestModel.FIRST_NAME.getExpression(), "A");
         TestModel model = new TestModel();
         model.readPropertiesFromContentValues(values, TestModel.FIRST_NAME);
         model.setFirstName("B");
 
-        model.getDefaultValues().put(TestModel.IS_HAPPY.getName(), 1);
+        model.getDefaultValues().put(TestModel.IS_HAPPY.getExpression(), 1);
         assertTrue(model.isHappy()); // Test default values
-        model.getDatabaseValues().put(TestModel.IS_HAPPY.getName(), 0);
+        model.getDatabaseValues().put(TestModel.IS_HAPPY.getExpression(), 0);
         assertFalse(model.isHappy()); // Test database values
-        model.getSetValues().put(TestModel.IS_HAPPY.getName(), 1);
+        model.getSetValues().put(TestModel.IS_HAPPY.getExpression(), 1);
         assertTrue(model.isHappy()); // Test set values
 
-        model.getDefaultValues().put(TestModel.IS_HAPPY.getName(), true); // Reset the static variable
+        model.getDefaultValues().put(TestModel.IS_HAPPY.getExpression(), true); // Reset the static variable
     }
 }

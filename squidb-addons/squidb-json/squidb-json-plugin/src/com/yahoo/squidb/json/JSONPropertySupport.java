@@ -30,7 +30,7 @@ public class JSONPropertySupport {
      */
     @SuppressWarnings("unchecked")
     public static <T> T getValueFromJSON(AbstractModel model, JSONProperty<T> property, Type javaType) {
-        if (!model.hasTransitory(property.getName())) {
+        if (!model.hasTransitory(property.getSelectName())) {
             T data = null;
             if (model.containsNonNullValue(property)) {
                 String value = model.get(property);
@@ -45,11 +45,11 @@ public class JSONPropertySupport {
                     model.clearValue(property);
                 }
             }
-            model.putTransitory(property.getName(), data);
+            model.putTransitory(property.getSelectName(), data);
             return data;
         }
 
-        return (T) model.getTransitory(property.getName());
+        return (T) model.getTransitory(property.getSelectName());
     }
 
     /**
@@ -71,7 +71,7 @@ public class JSONPropertySupport {
                 }
             }
             model.set(property, json);
-            model.putTransitory(property.getName(), data);
+            model.putTransitory(property.getSelectName(), data);
             return true;
         } catch (Exception e) {
             Logger.w(TAG, "Error serializing object to JSON string: " + data, e);

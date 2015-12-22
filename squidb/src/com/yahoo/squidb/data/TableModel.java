@@ -30,7 +30,7 @@ public abstract class TableModel extends AbstractModel {
      */
     public long getId() {
         Long id = null;
-        String idPropertyName = getIdProperty().getName();
+        String idPropertyName = getIdProperty().getExpression();
         if (setValues != null && setValues.containsKey(idPropertyName)) {
             id = (Long) setValues.get(idPropertyName);
         } else if (values != null && values.containsKey(idPropertyName)) {
@@ -54,7 +54,7 @@ public abstract class TableModel extends AbstractModel {
             if (setValues == null) {
                 setValues = newValuesStorage();
             }
-            setValues.put(getIdProperty().getName(), id);
+            setValues.put(getIdProperty().getExpression(), id);
         }
         return this;
     }

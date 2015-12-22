@@ -23,14 +23,16 @@ public class PropertyTest extends DatabaseTestCase {
 
     public void testPropertyAliasing() {
         LongProperty p = TestModel.ID;
-        assertEquals(p.getQualifiedExpression(), "testModels._id");
-        assertEquals(p.getExpression(), "_id");
-        assertEquals(p.getName(), "_id");
+        assertEquals("testModels._id", p.getQualifiedExpression());
+        assertEquals("_id", p.getExpression());
+        assertEquals("_id", p.getName());
+        assertEquals("testModels__id", p.getSelectName());
 
         LongProperty basicAlias = p.as("newAlias");
         assertEquals(p.tableModelName, basicAlias.tableModelName);
         assertEquals(p.getExpression(), basicAlias.getExpression());
         assertEquals("newAlias", basicAlias.getName());
+        assertEquals("newAlias", basicAlias.getSelectName());
         assertEquals("SELECT testModels._id AS newAlias", Query.select(basicAlias).toString());
 
         LongProperty aliasWithTable = p.as("newTable", "newAlias");
@@ -38,6 +40,7 @@ public class PropertyTest extends DatabaseTestCase {
         assertEquals("newTable", aliasWithTable.tableModelName.tableName);
         assertEquals(p.getExpression(), aliasWithTable.getExpression());
         assertEquals("newAlias", aliasWithTable.getName());
+        assertEquals("newAlias", aliasWithTable.getSelectName());
         assertEquals("SELECT newTable._id AS newAlias", Query.select(aliasWithTable).toString());
 
         LongProperty asSelectionFromTableNoAlias = TestViewModel.VIEW.qualifyField(basicAlias);
@@ -45,6 +48,7 @@ public class PropertyTest extends DatabaseTestCase {
         assertEquals(TestViewModel.VIEW.getName(), asSelectionFromTableNoAlias.tableModelName.tableName);
         assertEquals(basicAlias.getName(), asSelectionFromTableNoAlias.getExpression());
         assertEquals(basicAlias.getName(), asSelectionFromTableNoAlias.getName());
+        assertEquals("testView_newAlias", asSelectionFromTableNoAlias.getSelectName());
         assertFalse(asSelectionFromTableNoAlias.hasAlias());
         assertEquals("SELECT testView.newAlias AS testView_newAlias",
                 Query.select(asSelectionFromTableNoAlias).toString());
@@ -54,15 +58,18 @@ public class PropertyTest extends DatabaseTestCase {
         assertEquals(TestViewModel.VIEW.getName(), asSelectionFromTableWithAlias.tableModelName.tableName);
         assertEquals(basicAlias.getName(), asSelectionFromTableWithAlias.getExpression());
         assertEquals("superAlias", asSelectionFromTableWithAlias.getName());
+        assertEquals("superAlias", asSelectionFromTableWithAlias.getSelectName());
         assertEquals("SELECT testView.newAlias AS superAlias", Query.select(asSelectionFromTableWithAlias).toString());
 
         assertEquals(TestVirtualModel.ID.getQualifiedExpression(), "virtual_models.rowid");
         assertEquals(TestVirtualModel.ID.getExpression(), "rowid");
         assertEquals(TestVirtualModel.ID.getName(), "rowid");
+        assertEquals(TestVirtualModel.ID.getSelectName(), "virtual_models_rowid");
 
         assertEquals(Thing.ID.getQualifiedExpression(), "things.id");
         assertEquals(Thing.ID.getExpression(), "id");
         assertEquals(Thing.ID.getName(), "id");
+        assertEquals(Thing.ID.getSelectName(), "things_id");
     }
 
     public void testEqualsAndHashCode() {

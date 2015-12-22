@@ -90,7 +90,7 @@ public class VirtualTable extends Table {
             if (needComma) {
                 sql.append(',');
             }
-            sql.append(property.getName());
+            sql.append(property.getExpression());
             needComma = true;
         }
         sql.append(')');

@@ -93,12 +93,16 @@ public abstract class Property<TYPE> extends Field<TYPE> implements Cloneable {
 
     /**
      * @return the name that should be used when storing a value for this property in a model with the given table.
-     * If the provided table is the same as the table associated with this property, the result will be the result
-     * of {@link #getName()}. Otherwise, it will be the result of {@link #getSelectName()}
+     * If the provided table is the same as the table associated with this property, the result will be the real,
+     * unaliased name of the column this property represents (or its alias if this property is backed by a function).
+     * Otherwise, it will be the result of {@link #getSelectName()}
      */
     public String getNameForModelStorage(SqlTable<?> modelTable) {
         if (modelTable == table) {
-            return getName();
+            if (function != null) {
+                return getName();
+            }
+            return getExpression();
         } else {
             return getSelectName();
         }

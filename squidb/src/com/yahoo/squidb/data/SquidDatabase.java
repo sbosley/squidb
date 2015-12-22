@@ -1247,7 +1247,7 @@ public abstract class SquidDatabase {
         sql.append("INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(table.getExpression())
                 .append("(");
         for (Property<?> p : properties) {
-            sql.append(p.getName()).append(",");
+            sql.append(p.getExpression()).append(",");
         }
         sql.deleteCharAt(sql.length() - 1);
         sql.append(")");
@@ -1386,7 +1386,7 @@ public abstract class SquidDatabase {
     private static class SqlConstructorVisitor implements PropertyVisitor<Void, StringBuilder> {
 
         private Void appendColumnDefinition(String type, Property<?> property, StringBuilder sql) {
-            sql.append(property.getName()).append(" ").append(type);
+            sql.append(property.getExpression()).append(" ").append(type);
             if (!SqlUtils.isEmpty(property.getColumnDefinition())) {
                 sql.append(" ").append(property.getColumnDefinition());
             }

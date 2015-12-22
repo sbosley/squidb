@@ -202,7 +202,7 @@ public abstract class BasicPropertyGenerator extends PropertyGenerator {
 
         String methodToInvoke;
         List<Object> arguments = new ArrayList<>();
-        arguments.add(Expressions.callMethodOn(propertyName, "getName"));
+        arguments.add(Expressions.callMethodOn(propertyName, "getExpression"));
         if (ColumnSpec.DEFAULT_NULL.equals(defaultValue)) {
             methodToInvoke = "putNull";
         } else {

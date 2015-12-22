@@ -366,22 +366,23 @@ public abstract class AbstractModel implements Cloneable {
      * @throws UnsupportedOperationException if the value is not found in the model and throwIfNotFound is true
      */
     public <TYPE> TYPE get(Property<TYPE> property, boolean throwIfNotFound) {
+        String nameToUse = property.getNameForModelStorage(table);
         if (property.table != table) {
-            if (otherTableValues != null && otherTableValues.containsKey(property.getSelectName())) {
-                return getFromValues(property, otherTableValues);
+            if (otherTableValues != null && otherTableValues.containsKey(nameToUse)) {
+                return getFromValues(property, nameToUse, otherTableValues);
             }
         } else {
-            if (setValues != null && setValues.containsKey(property.getName())) {
-                return getFromValues(property, setValues);
-            } else if (values != null && values.containsKey(property.getName())) {
-                return getFromValues(property, values);
-            } else if (getDefaultValues().containsKey(property.getName())) {
-                return getFromValues(property, getDefaultValues());
+            if (setValues != null && setValues.containsKey(nameToUse)) {
+                return getFromValues(property, nameToUse, setValues);
+            } else if (values != null && values.containsKey(nameToUse)) {
+                return getFromValues(property, nameToUse, values);
+            } else if (getDefaultValues().containsKey(nameToUse)) {
+                return getFromValues(property, nameToUse, getDefaultValues());
             }
         }
 
         if (throwIfNotFound) {
-            throw new UnsupportedOperationException(property.getName()
+            throw new UnsupportedOperationException(nameToUse
                     + " not found in model. Make sure the value was set explicitly, read from a cursor,"
                     + " or that the model has a default value for this property.");
         } else {
@@ -390,8 +391,8 @@ public abstract class AbstractModel implements Cloneable {
     }
 
     @SuppressWarnings("unchecked")
-    private <TYPE> TYPE getFromValues(Property<TYPE> property, ValuesStorage values) {
-        Object value = values.get(property.getNameForModelStorage(table));
+    private <TYPE> TYPE getFromValues(Property<TYPE> property, String nameToUse, ValuesStorage values) {
+        Object value = values.get(nameToUse);
 
         // Will throw a ClassCastException if the value could not be coerced to the correct type
         return (TYPE) property.accept(valueCastingVisitor, value);
@@ -403,9 +404,9 @@ public abstract class AbstractModel implements Cloneable {
      */
     public boolean containsValue(Property<?> property) {
         if (property.table == table) {
-            return valuesContainsKey(setValues, property, false) || valuesContainsKey(values, property, false);
+            return valuesContainsKey(setValues, property) || valuesContainsKey(values, property);
         } else {
-            return valuesContainsKey(otherTableValues, property, true);
+            return valuesContainsKey(otherTableValues, property);
         }
     }
 
@@ -416,10 +417,10 @@ public abstract class AbstractModel implements Cloneable {
      */
     public boolean containsNonNullValue(Property<?> property) {
         if (property.table == table) {
-            return (valuesContainsKey(setValues, property, false) && setValues.get(property.getName()) != null)
-                    || (valuesContainsKey(values, property, false) && values.get(property.getName()) != null);
+            return (valuesContainsKey(setValues, property) && setValues.get(property.getExpression()) != null)
+                    || (valuesContainsKey(values, property) && values.get(property.getExpression()) != null);
         } else {
-            return (valuesContainsKey(otherTableValues, property, true) &&
+            return (valuesContainsKey(otherTableValues, property) &&
                     otherTableValues.get(property.getSelectName()) != null);
         }
     }
@@ -429,11 +430,11 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if this property has a value that was set by the user
      */
     public boolean fieldIsDirty(Property<?> property) {
-        return property.table == table && valuesContainsKey(setValues, property, false);
+        return property.table == table && valuesContainsKey(setValues, property);
     }
 
-    private boolean valuesContainsKey(ValuesStorage values, Property<?> property, boolean useSelectName) {
-        return values != null && values.containsKey(useSelectName ? property.getSelectName() : property.getName());
+    private boolean valuesContainsKey(ValuesStorage values, Property<?> property) {
+        return values != null && values.containsKey(property.getNameForModelStorage(table));
     }
 
     // --- data storage
@@ -442,7 +443,7 @@ public abstract class AbstractModel implements Cloneable {
      * Check whether the user has changed this property value and it should be stored for saving in the database
      */
     protected <TYPE> boolean shouldSaveValue(Property<TYPE> property, TYPE newValue) {
-        return property.table != table || shouldSaveValue(property.getName(), newValue);
+        return property.table != table || shouldSaveValue(property.getExpression(), newValue);
     }
 
     protected boolean shouldSaveValue(String name, Object newValue) {
@@ -545,12 +546,12 @@ public abstract class AbstractModel implements Cloneable {
      */
     public void clearValue(Property<?> property) {
         if (property.table == table) {
-            if (setValues != null && setValues.containsKey(property.getName())) {
-                setValues.remove(property.getName());
+            if (setValues != null && setValues.containsKey(property.getExpression())) {
+                setValues.remove(property.getExpression());
             }
 
-            if (values != null && values.containsKey(property.getName())) {
-                values.remove(property.getName());
+            if (values != null && values.containsKey(property.getExpression())) {
+                values.remove(property.getExpression());
             }
         } else {
             if (otherTableValues != null && otherTableValues.containsKey(property.getSelectName())) {
@@ -691,7 +692,8 @@ public abstract class AbstractModel implements Cloneable {
         }
 
         protected String getStorageName(Property<?> property) {
-            return property.getName();
+            // If we got here, we already know we have a table match, so it's ok to fake the argument to this method
+            return property.getNameForModelStorage(property.table);
         }
     }
 
