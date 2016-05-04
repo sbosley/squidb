@@ -97,8 +97,8 @@ public abstract class Property<TYPE> extends Field<TYPE> implements Cloneable {
      * unaliased name of the column this property represents (or its alias if this property is backed by a function).
      * Otherwise, it will be the result of {@link #getSelectName()}
      */
-    public String getNameForModelStorage(SqlTable<?> modelTable) {
-        if (modelTable == table) {
+    public String getNameForModelStorage(TableModelName tableModelName) {
+        if (TableModelName.equals(this.tableModelName, tableModelName)) {
             if (function != null) {
                 return getName();
             }

@@ -39,4 +39,11 @@ public final class TableModelName {
         result = 31 * result + (tableName != null ? tableName.hashCode() : 0);
         return result;
     }
+
+    public static boolean equals(TableModelName t1, TableModelName t2) {
+        if (t1 == null) {
+            return t2 == null;
+        }
+        return t1.equals(t2);
+    }
 }

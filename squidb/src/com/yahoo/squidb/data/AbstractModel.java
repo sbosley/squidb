@@ -10,6 +10,7 @@ import com.yahoo.squidb.sql.Property;
 import com.yahoo.squidb.sql.Property.PropertyVisitor;
 import com.yahoo.squidb.sql.Property.PropertyWritingVisitor;
 import com.yahoo.squidb.sql.SqlTable;
+import com.yahoo.squidb.sql.TableModelName;
 import com.yahoo.squidb.utility.Logger;
 
 import java.util.HashMap;
@@ -248,7 +249,7 @@ public abstract class AbstractModel implements Cloneable {
             for (Property<?> property : properties) {
                 String key = property.getNameForModelStorage(table);
                 ValuesStorage valuesStorage;
-                if (property.table == table) {
+                if (TableModelName.equals(property.tableModelName, table)) {
                     valuesStorage = this.values;
                 } else {
                     valuesStorage = otherTableValues;
@@ -322,7 +323,7 @@ public abstract class AbstractModel implements Cloneable {
         try {
             ValuesStorage valuesStorage = values;
             ValuesStorageSavingVisitor valuesSaver = saver;
-            if (property.table != table) {
+            if (!TableModelName.equals(property.tableModelName, table)) {
                 valuesStorage = otherTableValues;
                 valuesSaver = otherTableSaver;
             }
@@ -372,7 +373,7 @@ public abstract class AbstractModel implements Cloneable {
      */
     public <TYPE> TYPE get(Property<TYPE> property, boolean throwIfNotFound) {
         String nameToUse = property.getNameForModelStorage(table);
-        if (property.table != table) {
+        if (!TableModelName.equals(property.tableModelName, table)) {
             if (otherTableValues != null && otherTableValues.containsKey(nameToUse)) {
                 return getFromValues(property, nameToUse, otherTableValues);
             }
@@ -408,7 +409,7 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if a value for this property has been read from the database or set by the user
      */
     public boolean containsValue(Property<?> property) {
-        if (property.table == table) {
+        if (TableModelName.equals(property.tableModelName, table)) {
             return valuesContainsKey(setValues, property) || valuesContainsKey(values, property);
         } else {
             return valuesContainsKey(otherTableValues, property);
@@ -421,7 +422,7 @@ public abstract class AbstractModel implements Cloneable {
      * stored is not null
      */
     public boolean containsNonNullValue(Property<?> property) {
-        if (property.table == table) {
+        if (TableModelName.equals(property.tableModelName, table)) {
             return (valuesContainsKey(setValues, property) && setValues.get(property.getExpression()) != null)
                     || (valuesContainsKey(values, property) && values.get(property.getExpression()) != null);
         } else {
@@ -435,7 +436,7 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if this property has a value that was set by the user
      */
     public boolean fieldIsDirty(Property<?> property) {
-        return property.table == table && valuesContainsKey(setValues, property);
+        return TableModelName.equals(property.tableModelName, table) && valuesContainsKey(setValues, property);
     }
 
     private boolean valuesContainsKey(ValuesStorage values, Property<?> property) {
@@ -448,7 +449,8 @@ public abstract class AbstractModel implements Cloneable {
      * Check whether the user has changed this property value and it should be stored for saving in the database
      */
     protected <TYPE> boolean shouldSaveValue(Property<TYPE> property, TYPE newValue) {
-        return property.table != table || shouldSaveValue(property.getExpression(), newValue);
+        return !TableModelName.equals(property.tableModelName, table) || shouldSaveValue(property.getExpression(),
+                newValue);
     }
 
     protected boolean shouldSaveValue(String name, Object newValue) {
@@ -494,7 +496,7 @@ public abstract class AbstractModel implements Cloneable {
 
         ValuesStorage valuesStorage = setValues;
         ValuesStorageSavingVisitor valuesSaver = saver;
-        if (property.table != table) {
+        if (!TableModelName.equals(property.tableModelName, table)) {
             valuesStorage = otherTableValues;
             valuesSaver = otherTableSaver;
         }
@@ -518,11 +520,12 @@ public abstract class AbstractModel implements Cloneable {
             }
             for (Property<?> property : properties) {
                 String key = property.getNameForModelStorage(table);
-                ValuesStorage valuesStorage = property.table == table ? setValues : otherTableValues;
+                ValuesStorage valuesStorage = TableModelName.equals(property.tableModelName, table) ?
+                        setValues : otherTableValues;
 
                 if (values.containsKey(key)) {
                     Object value = property.accept(valueCastingVisitor, values.get(key));
-                    if (property.table != table || shouldSaveValue(key, value)) {
+                    if (!TableModelName.equals(property.tableModelName, table) || shouldSaveValue(key, value)) {
                         valuesStorage.put(key, value, true);
                     }
                 }
@@ -550,7 +553,7 @@ public abstract class AbstractModel implements Cloneable {
      * @param property the property to clear
      */
     public void clearValue(Property<?> property) {
-        if (property.table == table) {
+        if (TableModelName.equals(property.tableModelName, table)) {
             if (setValues != null && setValues.containsKey(property.getExpression())) {
                 setValues.remove(property.getExpression());
             }
@@ -698,7 +701,7 @@ public abstract class AbstractModel implements Cloneable {
 
         protected String getStorageName(Property<?> property) {
             // If we got here, we already know we have a table match, so it's ok to fake the argument to this method
-            return property.getNameForModelStorage(property.table);
+            return property.getNameForModelStorage(property.tableModelName);
         }
     }
 
