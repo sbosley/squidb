@@ -25,4 +25,8 @@ public class InheritanceModelTest extends DatabaseTestCase {
         assertEquals(TestEnum.BANANA, sd.getMyEnum());
     }
 
+    public void testSetPropertiesOnInheritedModelUsesCorrectTable() {
+        fail("Unimplemented");
+    }
+
 }
