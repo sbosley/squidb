@@ -38,6 +38,7 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
     protected JavaFileWriter writer;
 
     public static final String PROPERTIES_ARRAY_NAME = "PROPERTIES";
+    public static final String TABLE_MODEL_NAME = "TABLE_MODEL_NAME";
     protected static final String DEFAULT_VALUES_NAME = "defaultValues";
 
     private static final MethodDeclarationParameters GET_DEFAULT_VALUES_PARAMS;
@@ -104,7 +105,7 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
 
     private void emitImports() throws IOException {
         Set<DeclaredTypeName> imports = new HashSet<>();
-        imports.add(TypeConstants.SQL_TABLE);
+        imports.add(TypeConstants.TABLE_MODEL_NAME);
         modelSpec.addRequiredImports(imports);
         writer.writeImports(imports);
         writer.registerOtherKnownNames(TypeConstants.CREATOR,
@@ -165,13 +166,13 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
 
     protected void emitTableAndPropertyGetters() throws IOException {
         MethodDeclarationParameters getSqlTable = new MethodDeclarationParameters()
-                .setMethodName("getSqlTable")
-                .setReturnType(TypeConstants.SQL_TABLE)
+                .setMethodName("getTableModelName")
+                .setReturnType(TypeConstants.TABLE_MODEL_NAME)
                 .setModifiers(Modifier.PUBLIC);
 
         writer.writeAnnotation(CoreTypes.OVERRIDE);
         writer.beginMethodDefinition(getSqlTable);
-        writer.writeStatement(Expressions.returnExpr(Expressions.fromString(getSqlTableName())));
+        writer.writeStatement(Expressions.returnExpr(Expressions.fromString(TABLE_MODEL_NAME)));
         writer.finishMethodDefinition();
 
         MethodDeclarationParameters getProperties = new MethodDeclarationParameters()
@@ -184,8 +185,6 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
         writer.writeStatement(Expressions.returnExpr(Expressions.fromString(PROPERTIES_ARRAY_NAME)));
         writer.finishMethodDefinition();
     }
-
-    protected abstract String getSqlTableName();
 
     protected void emitDefaultValues() throws IOException {
         writer.writeComment("--- default values");

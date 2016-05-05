@@ -122,11 +122,25 @@ public class ViewModelFileWriter extends ModelFileWriter<ViewModelSpecWrapper> {
                     TypeConstants.PUBLIC_STATIC_FINAL);
 
             Expression initializer = constructInitializer(name, view);
+            String tableName = view ? VIEW_NAME : SUBQUERY_NAME;
             writer.writeFieldDeclaration(view ? TypeConstants.VIEW : TypeConstants.SUBQUERY_TABLE,
-                    view ? VIEW_NAME : SUBQUERY_NAME, initializer, TypeConstants.PUBLIC_STATIC_FINAL);
+                    tableName, initializer, TypeConstants.PUBLIC_STATIC_FINAL);
+
+            writer.writeFieldDeclaration(TypeConstants.TABLE_MODEL_NAME, TABLE_MODEL_NAME,
+                    Expressions.callConstructor(TypeConstants.TABLE_MODEL_NAME,
+                            Expressions.classObject(modelSpec.getGeneratedClassName()),
+                            Expressions.callMethodOn(tableName, "getName")),
+                    TypeConstants.PUBLIC_STATIC_FINAL);
+
         } else {
-            writer.writeFieldDeclaration(CoreTypes.JAVA_STRING, view ? "VIEW_NAME" : "SUBQUERY_NAME",
+            String tableName = view ? "VIEW_NAME" : "SUBQUERY_NAME";
+            writer.writeFieldDeclaration(CoreTypes.JAVA_STRING, tableName,
                     Expressions.fromString(name), TypeConstants.PUBLIC_STATIC_FINAL);
+            writer.writeFieldDeclaration(TypeConstants.TABLE_MODEL_NAME, TABLE_MODEL_NAME,
+                    Expressions.callConstructor(TypeConstants.TABLE_MODEL_NAME,
+                            Expressions.classObject(modelSpec.getGeneratedClassName()),
+                            Expressions.fromString(tableName)),
+                    TypeConstants.PUBLIC_STATIC_FINAL);
         }
         writer.writeNewline();
     }
@@ -177,14 +191,6 @@ public class ViewModelFileWriter extends ModelFileWriter<ViewModelSpecWrapper> {
                     .assign(Expressions.arrayReference(PROPERTIES_ARRAY_NAME, i),
                             Expressions.fromString(modelSpec.getPropertyGenerators().get(i).getPropertyName())));
         }
-    }
-
-    @Override
-    protected String getSqlTableName() {
-        if (modelSpec.getQueryElement() == null) {
-            return "null";
-        }
-        return modelSpec.getSpecAnnotation().isSubquery() ? SUBQUERY_NAME : VIEW_NAME;
     }
 
     private void emitTableModelMapper() throws IOException {

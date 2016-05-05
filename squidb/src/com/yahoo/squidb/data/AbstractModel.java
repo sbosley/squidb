@@ -9,7 +9,6 @@ import com.yahoo.squidb.sql.Field;
 import com.yahoo.squidb.sql.Property;
 import com.yahoo.squidb.sql.Property.PropertyVisitor;
 import com.yahoo.squidb.sql.Property.PropertyWritingVisitor;
-import com.yahoo.squidb.sql.SqlTable;
 import com.yahoo.squidb.sql.TableModelName;
 import com.yahoo.squidb.utility.Logger;
 
@@ -79,15 +78,15 @@ public abstract class AbstractModel implements Cloneable {
     /** Get the full properties array for this model class */
     public abstract Property<?>[] getProperties();
 
-    /** Get the table, view, or subquery represented by this model class */
-    public abstract SqlTable<?> getSqlTable();
+    /** Get the TableModelName representing by this model class/table name pair */
+    public abstract TableModelName getTableModelName();
 
     /** Get the default values for this object */
     public abstract ValuesStorage getDefaultValues();
 
     // --- data store variables and management
 
-    protected final SqlTable<?> table = getSqlTable();
+    protected final TableModelName tableModelName = getTableModelName();
 
     /** User set values */
     protected ValuesStorage setValues = null;
@@ -247,9 +246,9 @@ public abstract class AbstractModel implements Cloneable {
 
         if (values != null) {
             for (Property<?> property : properties) {
-                String key = property.getNameForModelStorage(table);
+                String key = property.getNameForModelStorage(tableModelName);
                 ValuesStorage valuesStorage;
-                if (TableModelName.equals(property.tableModelName, table)) {
+                if (TableModelName.equals(property.tableModelName, tableModelName)) {
                     valuesStorage = this.values;
                 } else {
                     valuesStorage = otherTableValues;
@@ -323,7 +322,7 @@ public abstract class AbstractModel implements Cloneable {
         try {
             ValuesStorage valuesStorage = values;
             ValuesStorageSavingVisitor valuesSaver = saver;
-            if (!TableModelName.equals(property.tableModelName, table)) {
+            if (!TableModelName.equals(property.tableModelName, tableModelName)) {
                 valuesStorage = otherTableValues;
                 valuesSaver = otherTableSaver;
             }
@@ -372,8 +371,8 @@ public abstract class AbstractModel implements Cloneable {
      * @throws UnsupportedOperationException if the value is not found in the model and throwIfNotFound is true
      */
     public <TYPE> TYPE get(Property<TYPE> property, boolean throwIfNotFound) {
-        String nameToUse = property.getNameForModelStorage(table);
-        if (!TableModelName.equals(property.tableModelName, table)) {
+        String nameToUse = property.getNameForModelStorage(tableModelName);
+        if (!TableModelName.equals(property.tableModelName, tableModelName)) {
             if (otherTableValues != null && otherTableValues.containsKey(nameToUse)) {
                 return getFromValues(property, nameToUse, otherTableValues);
             }
@@ -409,7 +408,7 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if a value for this property has been read from the database or set by the user
      */
     public boolean containsValue(Property<?> property) {
-        if (TableModelName.equals(property.tableModelName, table)) {
+        if (TableModelName.equals(property.tableModelName, tableModelName)) {
             return valuesContainsKey(setValues, property) || valuesContainsKey(values, property);
         } else {
             return valuesContainsKey(otherTableValues, property);
@@ -422,7 +421,7 @@ public abstract class AbstractModel implements Cloneable {
      * stored is not null
      */
     public boolean containsNonNullValue(Property<?> property) {
-        if (TableModelName.equals(property.tableModelName, table)) {
+        if (TableModelName.equals(property.tableModelName, tableModelName)) {
             return (valuesContainsKey(setValues, property) && setValues.get(property.getExpression()) != null)
                     || (valuesContainsKey(values, property) && values.get(property.getExpression()) != null);
         } else {
@@ -436,11 +435,11 @@ public abstract class AbstractModel implements Cloneable {
      * @return true if this property has a value that was set by the user
      */
     public boolean fieldIsDirty(Property<?> property) {
-        return TableModelName.equals(property.tableModelName, table) && valuesContainsKey(setValues, property);
+        return TableModelName.equals(property.tableModelName, tableModelName) && valuesContainsKey(setValues, property);
     }
 
     private boolean valuesContainsKey(ValuesStorage values, Property<?> property) {
-        return values != null && values.containsKey(property.getNameForModelStorage(table));
+        return values != null && values.containsKey(property.getNameForModelStorage(tableModelName));
     }
 
     // --- data storage
@@ -449,8 +448,8 @@ public abstract class AbstractModel implements Cloneable {
      * Check whether the user has changed this property value and it should be stored for saving in the database
      */
     protected <TYPE> boolean shouldSaveValue(Property<TYPE> property, TYPE newValue) {
-        return !TableModelName.equals(property.tableModelName, table) || shouldSaveValue(property.getExpression(),
-                newValue);
+        return !TableModelName.equals(property.tableModelName, tableModelName) ||
+                shouldSaveValue(property.getExpression(), newValue);
     }
 
     protected boolean shouldSaveValue(String name, Object newValue) {
@@ -496,7 +495,7 @@ public abstract class AbstractModel implements Cloneable {
 
         ValuesStorage valuesStorage = setValues;
         ValuesStorageSavingVisitor valuesSaver = saver;
-        if (!TableModelName.equals(property.tableModelName, table)) {
+        if (!TableModelName.equals(property.tableModelName, tableModelName)) {
             valuesStorage = otherTableValues;
             valuesSaver = otherTableSaver;
         }
@@ -519,13 +518,14 @@ public abstract class AbstractModel implements Cloneable {
                 otherTableValues = newValuesStorage();
             }
             for (Property<?> property : properties) {
-                String key = property.getNameForModelStorage(table);
-                ValuesStorage valuesStorage = TableModelName.equals(property.tableModelName, table) ?
+                String key = property.getNameForModelStorage(tableModelName);
+                ValuesStorage valuesStorage = TableModelName.equals(property.tableModelName, tableModelName) ?
                         setValues : otherTableValues;
 
                 if (values.containsKey(key)) {
                     Object value = property.accept(valueCastingVisitor, values.get(key));
-                    if (!TableModelName.equals(property.tableModelName, table) || shouldSaveValue(key, value)) {
+                    if (!TableModelName.equals(property.tableModelName, tableModelName) ||
+                            shouldSaveValue(key, value)) {
                         valuesStorage.put(key, value, true);
                     }
                 }
@@ -553,7 +553,7 @@ public abstract class AbstractModel implements Cloneable {
      * @param property the property to clear
      */
     public void clearValue(Property<?> property) {
-        if (TableModelName.equals(property.tableModelName, table)) {
+        if (TableModelName.equals(property.tableModelName, tableModelName)) {
             if (setValues != null && setValues.containsKey(property.getExpression())) {
                 setValues.remove(property.getExpression());
             }

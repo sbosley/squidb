@@ -28,8 +28,7 @@ import javax.tools.Diagnostic.Kind;
  */
 public class TableModelFileWriter extends ModelFileWriter<TableModelSpecWrapper> {
 
-    public static final String TABLE_NAME = "TABLE";
-    public static final String TABLE_MODEL_NAME = "TABLE_MODEL_NAME";
+    private static final String TABLE_NAME = "TABLE";
 
     public TableModelFileWriter(TypeElement element, PluginEnvironment pluginEnv, AptUtils utils) {
         super(new TableModelSpecWrapper(element, pluginEnv, utils), pluginEnv, utils);
@@ -140,11 +139,6 @@ public class TableModelFileWriter extends ModelFileWriter<TableModelSpecWrapper>
                     .assign(Expressions.arrayReference(PROPERTIES_ARRAY_NAME, i + 1),
                             Expressions.fromString(modelSpec.getPropertyGenerators().get(i).getPropertyName())));
         }
-    }
-
-    @Override
-    protected String getSqlTableName() {
-        return TABLE_NAME;
     }
 
     @Override

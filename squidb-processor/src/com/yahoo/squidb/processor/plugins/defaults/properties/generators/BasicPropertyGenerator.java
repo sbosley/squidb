@@ -15,7 +15,7 @@ import com.yahoo.squidb.annotations.ColumnSpec;
 import com.yahoo.squidb.processor.StringUtils;
 import com.yahoo.squidb.processor.TypeConstants;
 import com.yahoo.squidb.processor.data.ModelSpec;
-import com.yahoo.squidb.processor.writers.TableModelFileWriter;
+import com.yahoo.squidb.processor.writers.ModelFileWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -94,7 +94,7 @@ public abstract class BasicPropertyGenerator extends PropertyGenerator {
             writer.writeAnnotation(CoreTypes.DEPRECATED);
         }
         List<Object> constructorArgs = new ArrayList<>();
-        constructorArgs.add(TableModelFileWriter.TABLE_MODEL_NAME);
+        constructorArgs.add(ModelFileWriter.TABLE_MODEL_NAME);
         constructorArgs.add("\"" + columnName + "\"");
         String columnDef = getColumnDefinition();
         if (!AptUtils.isEmpty(columnDef)) {
