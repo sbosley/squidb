@@ -26,7 +26,15 @@ public class InheritanceModelTest extends DatabaseTestCase {
     }
 
     public void testSetPropertiesOnInheritedModelUsesCorrectTable() {
-        fail("Unimplemented");
+        SpecificData sd = new SpecificData();
+        sd.setAddress("123 Test")
+                .setFirstName("A")
+                .setLastName("B");
+        ValuesStorage setValues = sd.getSetValues();
+        assertEquals(3, setValues.size());
+        assertEquals((String) setValues.get(SpecificData.ADDRESS.getExpression()), "123 Test");
+        assertEquals((String) setValues.get(SpecificData.FIRST_NAME.getExpression()), "A");
+        assertEquals((String) setValues.get(SpecificData.LAST_NAME.getExpression()), "B");
     }
 
 }
