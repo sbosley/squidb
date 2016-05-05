@@ -46,4 +46,11 @@ public final class TableModelName {
         }
         return t1.equals(t2);
     }
+
+    public static boolean equalsClassOnly(TableModelName t1, TableModelName t2) {
+        if (t1 == null) {
+            return t2 == null;
+        }
+        return t2 != null && t1.modelClass.equals(t2.modelClass);
+    }
 }

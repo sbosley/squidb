@@ -9,6 +9,7 @@ import com.yahoo.squidb.sql.Field;
 import com.yahoo.squidb.sql.Property;
 import com.yahoo.squidb.sql.Property.PropertyVisitor;
 import com.yahoo.squidb.sql.Property.PropertyWritingVisitor;
+import com.yahoo.squidb.sql.SqlTable;
 import com.yahoo.squidb.sql.TableModelName;
 import com.yahoo.squidb.utility.Logger;
 
@@ -482,6 +483,18 @@ public abstract class AbstractModel implements Cloneable {
      * @param value the new value for the property
      */
     public <TYPE> void set(Property<TYPE> property, TYPE value) {
+        setInternal(property, value, true);
+    }
+
+    /**
+     * Sets the specified {@link Property} to the given value. This method allows ignoring table aliases when
+     * determining which ValuesStorage to use, and compares only model classes. This method is not intended to be a
+     * part of the public API and only exists to support {@link ViewModel#mapToModel(AbstractModel, SqlTable)}
+     *
+     * @param property the property to set
+     * @param value the new value for the property
+     */
+    protected <TYPE> void setInternal(Property<TYPE> property, TYPE value, boolean matchTableName) {
         if (setValues == null) {
             setValues = newValuesStorage();
         }
@@ -495,7 +508,10 @@ public abstract class AbstractModel implements Cloneable {
 
         ValuesStorage valuesStorage = setValues;
         ValuesStorageSavingVisitor valuesSaver = saver;
-        if (!TableModelName.equals(property.tableModelName, tableModelName)) {
+        boolean useOtherValuesStorage = matchTableName ?
+                !TableModelName.equals(property.tableModelName, tableModelName) :
+                !TableModelName.equalsClassOnly(property.tableModelName, tableModelName);
+        if (useOtherValuesStorage) {
             valuesStorage = otherTableValues;
             valuesSaver = otherTableSaver;
         }

@@ -116,7 +116,7 @@ public abstract class ViewModel extends AbstractModel {
         public Void visitInteger(Property<Integer> property, T dst, ViewModel src) {
             Property<Integer> toSet = getPropertyToSet(property);
             if (src.containsValue(property)) {
-                dst.set(toSet, src.get(property));
+                dst.setInternal(toSet, src.get(property), false);
             }
             return null;
         }
@@ -125,7 +125,7 @@ public abstract class ViewModel extends AbstractModel {
         public Void visitLong(Property<Long> property, T dst, ViewModel src) {
             Property<Long> toSet = getPropertyToSet(property);
             if (src.containsValue(property)) {
-                dst.set(toSet, src.get(property));
+                dst.setInternal(toSet, src.get(property), false);
             }
             return null;
         }
@@ -134,7 +134,7 @@ public abstract class ViewModel extends AbstractModel {
         public Void visitDouble(Property<Double> property, T dst, ViewModel src) {
             Property<Double> toSet = getPropertyToSet(property);
             if (src.containsValue(property)) {
-                dst.set(toSet, src.get(property));
+                dst.setInternal(toSet, src.get(property), false);
             }
             return null;
         }
@@ -143,7 +143,7 @@ public abstract class ViewModel extends AbstractModel {
         public Void visitString(Property<String> property, T dst, ViewModel src) {
             Property<String> toSet = getPropertyToSet(property);
             if (src.containsValue(property)) {
-                dst.set(toSet, src.get(property));
+                dst.setInternal(toSet, src.get(property), false);
             }
             return null;
         }
@@ -152,7 +152,7 @@ public abstract class ViewModel extends AbstractModel {
         public Void visitBoolean(Property<Boolean> property, T dst, ViewModel src) {
             Property<Boolean> toSet = getPropertyToSet(property);
             if (src.containsValue(property)) {
-                dst.set(toSet, src.get(property));
+                dst.setInternal(toSet, src.get(property), false);
             }
             return null;
         }
@@ -161,7 +161,7 @@ public abstract class ViewModel extends AbstractModel {
         public Void visitBlob(Property<byte[]> property, T dst, ViewModel src) {
             Property<byte[]> toSet = getPropertyToSet(property);
             if (src.containsValue(property)) {
-                dst.set(toSet, src.get(property));
+                dst.setInternal(toSet, src.get(property), false);
             }
             return null;
         }
