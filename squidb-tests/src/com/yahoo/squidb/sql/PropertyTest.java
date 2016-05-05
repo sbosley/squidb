@@ -141,7 +141,7 @@ public class PropertyTest extends DatabaseTestCase {
         StringBuilder expectedSql = new StringBuilder("SELECT ");
         for (int i = 0; i < originalProperties.length; i++) {
             String expectedExpression = "testModelAlias." + originalProperties[i].getName() +
-                    " AS " + originalProperties[i].getName();
+                    " AS " + originalProperties[i].getSelectName().replace(tableOrView.getName(), "testModelAlias");
             expectedSql.append(expectedExpression);
             if (i < originalProperties.length - 1) {
                 expectedSql.append(", ");
