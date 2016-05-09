@@ -156,6 +156,18 @@ public class ViewModelFileWriter extends ModelFileWriter<ViewModelSpecWrapper> {
     }
 
     @Override
+    protected Expression getReturnSqlTableExpression() {
+        if (modelSpec.getQueryElement() != null) {
+            boolean view = !modelSpec.getSpecAnnotation().isSubquery();
+            String tableName = view ? VIEW_NAME : SUBQUERY_NAME;
+            return Expressions.returnExpr(Expressions.fromString(tableName));
+        } else {
+            return Expressions.fromString("throw new UnsupportedOperationException(\"Model class \" + getClass() + "
+                    + "\" does not have an associated SqlTable\")");
+        }
+    }
+
+    @Override
     protected void emitAllProperties() throws IOException {
         for (int i = 0; i < modelSpec.getPropertyGenerators().size(); i++) {
             emitSinglePropertyDeclaration(modelSpec.getPropertyGenerators().get(i), i);

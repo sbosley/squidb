@@ -10,6 +10,7 @@ import com.yahoo.aptutils.model.DeclaredTypeName;
 import com.yahoo.aptutils.utils.AptUtils;
 import com.yahoo.aptutils.writer.JavaFileWriter;
 import com.yahoo.aptutils.writer.JavaFileWriter.Type;
+import com.yahoo.aptutils.writer.expressions.Expression;
 import com.yahoo.aptutils.writer.expressions.Expressions;
 import com.yahoo.aptutils.writer.parameters.MethodDeclarationParameters;
 import com.yahoo.aptutils.writer.parameters.TypeDeclarationParameters;
@@ -105,7 +106,6 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
 
     private void emitImports() throws IOException {
         Set<DeclaredTypeName> imports = new HashSet<>();
-        imports.add(TypeConstants.TABLE_MODEL_NAME);
         modelSpec.addRequiredImports(imports);
         writer.writeImports(imports);
         writer.registerOtherKnownNames(TypeConstants.CREATOR,
@@ -165,13 +165,13 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
     protected abstract void writePropertiesInitializationBlock() throws IOException;
 
     protected void emitTableAndPropertyGetters() throws IOException {
-        MethodDeclarationParameters getSqlTable = new MethodDeclarationParameters()
+        MethodDeclarationParameters getTableModelName = new MethodDeclarationParameters()
                 .setMethodName("getTableModelName")
                 .setReturnType(TypeConstants.TABLE_MODEL_NAME)
                 .setModifiers(Modifier.PUBLIC);
 
         writer.writeAnnotation(CoreTypes.OVERRIDE);
-        writer.beginMethodDefinition(getSqlTable);
+        writer.beginMethodDefinition(getTableModelName);
         writer.writeStatement(Expressions.returnExpr(Expressions.fromString(TABLE_MODEL_NAME)));
         writer.finishMethodDefinition();
 
@@ -184,7 +184,19 @@ public abstract class ModelFileWriter<T extends ModelSpec<?>> {
         writer.beginMethodDefinition(getProperties);
         writer.writeStatement(Expressions.returnExpr(Expressions.fromString(PROPERTIES_ARRAY_NAME)));
         writer.finishMethodDefinition();
+
+        MethodDeclarationParameters getSqlTable = new MethodDeclarationParameters()
+                .setMethodName("getSqlTable")
+                .setReturnType(TypeConstants.SQL_TABLE)
+                .setModifiers(Modifier.PUBLIC);
+
+        writer.writeAnnotation(CoreTypes.OVERRIDE);
+        writer.beginMethodDefinition(getSqlTable);
+        writer.writeStatement(getReturnSqlTableExpression());
+        writer.finishMethodDefinition();
     }
+
+    protected abstract Expression getReturnSqlTableExpression();
 
     protected void emitDefaultValues() throws IOException {
         writer.writeComment("--- default values");

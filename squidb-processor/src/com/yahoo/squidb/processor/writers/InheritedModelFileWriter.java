@@ -6,6 +6,7 @@
 package com.yahoo.squidb.processor.writers;
 
 import com.yahoo.aptutils.utils.AptUtils;
+import com.yahoo.aptutils.writer.expressions.Expression;
 import com.yahoo.aptutils.writer.expressions.Expressions;
 import com.yahoo.squidb.processor.TypeConstants;
 import com.yahoo.squidb.processor.data.InheritedModelSpecWrapper;
@@ -58,6 +59,12 @@ public class InheritedModelFileWriter extends ModelFileWriter<InheritedModelSpec
     @Override
     protected void emitTableAndPropertyGetters() throws IOException {
         // The superclass declares these
+    }
+
+    @Override
+    protected Expression getReturnSqlTableExpression() {
+        // Not needed; this is only called for table and view models
+        return null;
     }
 
     @Override

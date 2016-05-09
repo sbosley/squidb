@@ -135,6 +135,8 @@ public abstract class ModelSpec<T extends Annotation> {
     public final void addRequiredImports(Set<DeclaredTypeName> imports) {
         imports.add(TypeConstants.PROPERTY); // For PROPERTIES array
         imports.add(TypeConstants.VALUES_STORAGE);
+        imports.add(TypeConstants.TABLE_MODEL_NAME);
+        imports.add(TypeConstants.SQL_TABLE);
         imports.add(getModelSuperclass());
         for (PropertyGenerator generator : propertyGenerators) {
             generator.registerRequiredImports(imports);

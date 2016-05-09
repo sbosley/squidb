@@ -79,8 +79,11 @@ public abstract class AbstractModel implements Cloneable {
     /** Get the full properties array for this model class */
     public abstract Property<?>[] getProperties();
 
-    /** Get the TableModelName representing by this model class/table name pair */
+    /** Get the TableModelName representing this model class/table name pair */
     public abstract TableModelName getTableModelName();
+
+    /** Get the SqlTable object represented by this model class */
+    public abstract SqlTable<?> getSqlTable();
 
     /** Get the default values for this object */
     public abstract ValuesStorage getDefaultValues();

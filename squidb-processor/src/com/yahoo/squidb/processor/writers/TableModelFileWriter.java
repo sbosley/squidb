@@ -130,6 +130,11 @@ public class TableModelFileWriter extends ModelFileWriter<TableModelSpecWrapper>
     }
 
     @Override
+    protected Expression getReturnSqlTableExpression() {
+        return Expressions.returnExpr(Expressions.fromString(TABLE_NAME));
+    }
+
+    @Override
     protected void writePropertiesInitializationBlock() throws IOException {
         writer.writeStatement(Expressions
                 .assign(Expressions.arrayReference(PROPERTIES_ARRAY_NAME, 0),
